@@ -25,7 +25,7 @@
 .
 ├── .qoder/                 # AI 编码框架（Harness 层）
 │   ├── agents/             # 子代理定义（规划见 agents/README.md）
-│   ├── commands/           # 斜杠命令：explore / propose / apply / archive
+│   ├── commands/opsx/      # 斜杠命令：opsx-explore / opsx-propose / opsx-apply / opsx-archive
 │   ├── rules/              # 规则：coding-conventions / spec-driven-workflow
 │   └── skills/             # opsx 链路技能 + Superpowers 技能库
 ├── openspec/               # 规范层（单一事实来源）
@@ -34,6 +34,8 @@
 │   ├── config.yaml         # OpenSpec 配置
 │   └── project.md          # 项目上下文（技术栈、约定、约束）
 ├── src/                    # 源代码
+│   ├── backend/            # Spring Boot 4.1.2 + Maven 单模块（Java 21，端口 8080）
+│   └── frontend/           # Vite 7 + React 19 + TypeScript（端口 5173）
 ├── .gitignore
 ├── AGENTS.md               # 所有 AI 代理的根级指令
 └── README.md
@@ -54,13 +56,42 @@ irm https://raw.githubusercontent.com/Fission-AI/OpenSpec/main/scripts/binary/in
 在 AI 编码代理中输入：
 
 ```
-/explore 我想做 XXX          # 探索现状与方案
-/propose add-xxx             # 创建变更提案，等待评审
-/apply                       # 按提案实施（TDD）
-/archive                     # 完成后归档
+/opsx-explore 我想做 XXX       # 探索现状与方案
+/opsx-propose add-xxx          # 创建变更提案，等待评审
+/opsx-apply                    # 按提案实施（TDD）
+/opsx-archive                  # 完成后归档
 ```
 
-### 3. 参考
+### 3. 启动前后端（本地开发）
+
+环境要求：JDK 21+、Maven 3.9+、Node.js 20+。
+
+```powershell
+# 后端（端口 8080）
+cd src/backend
+mvn spring-boot:run
+
+# 前端（端口 5173，/api 代理到 8080）
+cd src/frontend
+npm install
+npm run dev
+```
+
+验证：浏览器打开 http://localhost:5173 ，页面应显示 hello。
+
+后端接口：
+
+- `GET /api/health` — 健康检查（返回统一响应 `{code, message, data}`）
+- `GET /api/echo?message=...` — 回显（缺少 message 时返回 400 统一错误）
+
+测试与构建：
+
+```powershell
+cd src/backend; mvn test        # 后端集成测试
+cd src/frontend; npm run build  # 前端类型检查 + 生产构建
+```
+
+### 4. 参考
 
 - OpenSpec: https://github.com/Fission-AI/OpenSpec
 - Superpowers: https://github.com/obra/superpowers

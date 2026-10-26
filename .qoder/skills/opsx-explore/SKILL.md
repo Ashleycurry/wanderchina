@@ -1,0 +1,36 @@
+---
+name: opsx-explore
+version: 1.0.0
+description: 探索代码库与需求，梳理候选方案（OpenSpec opsx 链路第 1 步，只读）
+user-invocable: true
+argument-hint: "<想探索的目标>"
+---
+
+# opsx-explore
+
+在动手之前，先做一次"零风险"的探索：理解现状、权衡选项、形成方案雏形，为后续 `/opsx-propose` 做准备。
+
+## 何时使用
+
+- 需求模糊，尚不确定"要做什么"或"怎么做"
+- 需要理解现有代码结构、做技术方案选型
+- 用户想先看方案再决定是否立项
+
+## 执行步骤
+
+1. 阅读 `openspec/project.md` 了解项目背景与约定
+2. 检索相关代码（SearchCodebase / Grep / LSP），弄清现状与约束
+3. 阅读相关的 `openspec/specs/*/spec.md` 了解既有规格
+4. 分析 2~3 个候选方案，给出权衡（复杂度 / 风险 / 成本）
+5. 用简短可读的段落汇报发现与推荐路径，询问用户是否进入 `/opsx-propose`
+
+## 输出
+
+- 现状小结（带文件证据）
+- 候选方案与推荐
+- 是否继续 `propose` 的确认问题
+
+## 注意
+
+- 此阶段只读，不修改任何代码
+- 不创建 openspec 变更目录（那是 `propose` 的职责）

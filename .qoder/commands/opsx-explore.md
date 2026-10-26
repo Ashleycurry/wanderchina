@@ -1,11 +1,11 @@
 ---
-name: explore
+name: opsx-explore
 description: 在写代码前探索代码库与需求，梳理候选方案（OpenSpec 探索阶段，只读）
 ---
 
-# /explore
+# /opsx-explore
 
-在动手之前，先做一次"零风险"的探索：理解现状、权衡选项、形成方案雏形，为后续 `propose` 做准备。
+在动手之前，先做一次"零风险"的探索：理解现状、权衡选项、形成方案雏形，为后续 `/opsx-propose` 做准备。
 
 ## 何时使用
 
@@ -19,7 +19,7 @@ description: 在写代码前探索代码库与需求，梳理候选方案（Open
 2. 检索相关代码（SearchCodebase / Grep / LSP），弄清现状与约束
 3. 阅读相关的 `openspec/specs/*/spec.md` 了解既有规格
 4. 分析 2~3 个候选方案，给出权衡（复杂度 / 风险 / 成本）
-5. 用简短可读的段落汇报发现与推荐路径，询问用户是否进入 `propose`
+5. 用简短可读的段落汇报发现与推荐路径，询问用户是否进入 `/opsx-propose`
 
 ## 输出
 

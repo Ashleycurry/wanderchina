@@ -25,4 +25,4 @@
 ## 4. 验证
 
 - [x] 4.1 校验目录结构与文件齐备
-- [ ] 4.2 （可选）`openspec validate 0001-bootstrap-openspec --strict`
+- [x] 4.2 `openspec validate 0001-bootstrap-openspec --strict`（通过）

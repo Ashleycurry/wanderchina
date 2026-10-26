@@ -1,9 +1,9 @@
 ---
-name: archive
+name: opsx-archive
 description: 归档已完成的 OpenSpec 变更，并将 delta 规格合入 specs/
 ---
 
-# /archive
+# /opsx-archive
 
 将已上线/已完成的变更从 `openspec/changes/<name>/` 归档。
 

@@ -14,10 +14,10 @@
 
 任何新功能、行为变更或架构调整，必须依次经过：
 
-1. **explore**：需求模糊时先探索代码与方案（`/explore`），只读不改。
-2. **propose**：创建 `openspec/changes/<name>/` 提案（proposal.md / specs/ / design.md / tasks.md），等待用户评审确认（`/propose`）。
-3. **apply**：按 tasks.md 逐条实施，遵循 TDD 与任务级评审（`/apply`）。
-4. **archive**：变更完成并上线后归档，delta 合入 `openspec/specs/`（`/archive`）。
+1. **explore**：需求模糊时先探索代码与方案（`/opsx-explore`），只读不改。
+2. **propose**：创建 `openspec/changes/<name>/` 提案（proposal.md / specs/ / design.md / tasks.md），等待用户评审确认（`/opsx-propose`）。
+3. **apply**：按 tasks.md 逐条实施，遵循 TDD 与任务级评审（`/opsx-apply`）。
+4. **archive**：变更完成并上线后归档，delta 合入 `openspec/specs/`（`/opsx-archive`）。
 
 > 未经用户确认的提案，禁止写任何实现代码。微小修复（拼写、单行 bug）可直接修复，但需同步更新受影响的规格。
 

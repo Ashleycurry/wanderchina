@@ -1,16 +1,19 @@
 ---
-name: apply
-description: 按已确认的 OpenSpec 变更提案逐条实施（TDD + 子代理驱动开发）
+name: opsx-apply
+version: 1.0.0
+description: 按已确认的 OpenSpec 变更提案逐条实施（TDD + 子代理驱动开发，opsx 链路第 3 步）
+user-invocable: true
+argument-hint: "<change-name>"
 ---
 
-# /apply
+# opsx-apply
 
 按已确认的 `openspec/changes/<name>/` 提案实施代码。
 
 ## 前置条件
 
-- 变更提案已通过用户评审（`propose` 完成）
-- 知道要实施的变更名（`/apply <name>`）
+- 变更提案已通过用户评审（`/opsx-propose` 完成）
+- 知道要实施的变更名（`/opsx-apply <name>`）
 
 ## 执行步骤
 
@@ -23,7 +26,7 @@ description: 按已确认的 OpenSpec 变更提案逐条实施（TDD + 子代理
    - 运行完整测试套件并确保通过
    - 对照 specs 场景逐条验证（`verification-before-completion`）
    - 向用户汇报完成情况与验证证据
-5. 提交代码，等待用户决定是否归档（`archive`）
+5. 提交代码，等待用户决定是否归档（`/opsx-archive`）
 
 ## 规则
 

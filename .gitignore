@@ -13,6 +13,7 @@ venv/
 dist/
 build/
 out/
+target/
 *.tsbuildinfo
 
 # 环境变量
