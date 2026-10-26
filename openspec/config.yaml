@@ -1,0 +1,4 @@
+# OpenSpec 项目配置
+# 文档: https://openspec.dev/docs
+# 使用社区"规范驱动开发"模式（spec-driven）
+schema: spec-driven
