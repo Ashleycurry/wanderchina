@@ -64,7 +64,9 @@ irm https://raw.githubusercontent.com/Fission-AI/OpenSpec/main/scripts/binary/in
 
 ### 3. 启动前后端（本地开发）
 
-环境要求：JDK 21+、Maven 3.9+、Node.js 20+。
+Windows 下双击根目录 **`start.bat`** 即可一键启动（自动开两个服务窗口并打开浏览器）。
+
+也可手动分别启动（环境要求：JDK 21+、Maven 3.9+、Node.js 20+）：
 
 ```powershell
 # 后端（端口 8080）
