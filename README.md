@@ -1,6 +1,8 @@
 # wanderchina
 
-基于 **Harness（Qoder）+ OpenSpec + Superpowers** 三合一理念初始化的 AI coding 全栈开发项目骨架。
+基于 **Harness（Qoder）+ OpenSpec + Superpowers** 三合一理念的 AI coding 全栈项目（AIWorkSpace 工作区）。
+
+根仓库是 **AIWorkSpace**：只承载 Harness、规范与脚本；前后端分别作为独立 git 子仓库（submodule）：`frontend/` → [wanderchina-frontend](https://github.com/Ashleycurry/wanderchina-frontend)，`backend/` → [wanderchina-backend](https://github.com/Ashleycurry/wanderchina-backend)。
 
 ## 三大支柱
 
@@ -33,9 +35,11 @@
 │   ├── specs/              # 已合入的规格
 │   ├── config.yaml         # OpenSpec 配置
 │   └── project.md          # 项目上下文（技术栈、约定、约束）
-├── src/                    # 源代码
-│   ├── backend/            # Spring Boot 4.1.2 + Maven 单模块（Java 21，端口 8080）
-│   └── frontend/           # Vite 7 + React 19 + TypeScript（端口 5173）
+├── frontend/               # 前端子仓库（submodule → wanderchina-frontend）
+│                           #   Vite 7 + React 19 + TypeScript，端口 5173
+├── backend/                # 后端子仓库（submodule → wanderchina-backend）
+│                           #   Spring Boot 4.1.2 + Java 21，端口 8080
+├── .gitmodules             # 子模块配置
 ├── .gitignore
 ├── AGENTS.md               # 所有 AI 代理的根级指令
 └── README.md
@@ -64,17 +68,19 @@ irm https://raw.githubusercontent.com/Fission-AI/OpenSpec/main/scripts/binary/in
 
 ### 3. 启动前后端（本地开发）
 
+> 首次克隆本仓库后，先执行 `git submodule update --init --recursive` 初始化 `frontend/` 与 `backend/` 子模块。
+
 Windows 下双击根目录 **`start.bat`** 即可一键启动（自动开两个服务窗口并打开浏览器）。
 
 也可手动分别启动（环境要求：JDK 21+、Maven 3.9+、Node.js 20+）：
 
 ```powershell
 # 后端（端口 8080）
-cd src/backend
+cd backend
 mvn spring-boot:run
 
 # 前端（端口 5173，/api 代理到 8080）
-cd src/frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -89,8 +95,8 @@ npm run dev
 测试与构建：
 
 ```powershell
-cd src/backend; mvn test        # 后端集成测试
-cd src/frontend; npm run build  # 前端类型检查 + 生产构建
+cd backend; mvn test        # 后端集成测试
+cd frontend; npm run build  # 前端类型检查 + 生产构建
 ```
 
 ### 4. 参考

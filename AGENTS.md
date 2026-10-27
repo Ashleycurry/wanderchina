@@ -31,11 +31,21 @@
 
 ## 目录约定
 
+根仓库是 AIWorkSpace：只承载 Harness、规范与脚本等协作配置，业务代码位于两个 git submodule。
+
 | 目录 | 用途 |
 | --- | --- |
 | `openspec/` | 规格与变更提案（单一事实来源） |
-| `src/` | 源代码 |
+| `frontend/` | 前端子仓库（submodule → wanderchina-frontend；Vite 7 + React 19 + TypeScript，端口 5173） |
+| `backend/` | 后端子仓库（submodule → wanderchina-backend；Spring Boot 4.1.2 + Java 21，端口 8080） |
 | `.qoder/` | 代理框架配置（agents / commands / rules / skills） |
+
+## 子仓库（Submodule）约定
+
+- `frontend/`、`backend/` 是独立 git 仓库，代码改动在对应子仓库内 commit / push，不通过根仓库提交
+- 克隆根仓库后先初始化子模块：`git submodule update --init --recursive`
+- 子仓库推送后，回根仓库提交新的 gitlink（根仓库只记录子仓库的 commit 指针）
+- 本地开发：根目录双击 `start.bat` 一键启动，或在 `frontend/`、`backend/` 内分别启动
 
 ## 角色分工
 

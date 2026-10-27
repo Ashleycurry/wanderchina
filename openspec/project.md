@@ -22,7 +22,7 @@ WanderChina：基于 Harness（Qoder）+ OpenSpec + Superpowers 的 AI coding �
 
 ### Architecture Patterns
 
-- 前后端分离：`src/backend`（REST API）与 `src/frontend`（SPA）同仓独立构建
+- 根仓库为 AIWorkSpace（仅 Harness + OpenSpec + 脚本）；前后端为两个独立 git 子仓库（submodule）：`backend/`（REST API）与 `frontend/`（SPA），各自独立构建与提交
 - 统一响应结构 `ApiResponse<T>`：`{ code, message, data }`，code=0 成功；失败时 code 与 HTTP 状态一致
 - 全局异常处理：缺参/非法参数 → 400，未捕获异常 → 500（不泄露内部细节）
 
@@ -35,6 +35,7 @@ WanderChina：基于 Harness（Qoder）+ OpenSpec + Superpowers 的 AI coding �
 ### Git Workflow
 
 - 主干开发；变更按 OpenSpec `changes/<name>/` 组织，评审后实施、完成后归档
+- 子仓库（`frontend/`、`backend/`）内提交并推送后，根仓库提交新的 gitlink；克隆后需 `git submodule update --init --recursive`
 - 不提交 `node_modules/`、`target/`、`dist/`
 
 ## Domain Context

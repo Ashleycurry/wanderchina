@@ -4,7 +4,7 @@
 
 ### Requirement: 用户身份识别与数据隔离
 
-系统 SHALL 通过请求头 `X-User-Id`（1~64 字符，`^[A-Za-z0-9_-]+$`）识别用户，所有 Todo 数据按用户隔离，互不可见。
+系统 SHALL 通过请求头 `X-User-Id`（1~64 字符，`^[A-Za-z0-9_-]+$`）识别用户，所有 Todo 数据按用户隔离，互不可见。身份可信性由外部保证（v1 无认证、头可伪造，见 design 安全边界）；本模块只负责按标识隔离数据。
 
 #### Scenario: 缺少用户标识
 
@@ -24,7 +24,7 @@
 
 ### Requirement: 创建 Todo
 
-系统 SHALL 支持 `POST /api/todos` 创建 Todo。请求需携带 `X-User-Id` 与 `Idempotency-Key`（UUID v4）。请求体字段：`title` 必填（trim 后 10~100 字符）；`description` 可选（≤500 字符）；`priority` 可选（枚举 `LOW`/`MEDIUM`/`HIGH`，缺省 `MEDIUM`）；`tags` 可选（≤5 个，每个 1~20 字符，重复自动去重，缺省 `[]`）；`dueAt` 可选（ISO-8601 或 null，缺省 null）。创建结果的 `status` 固定为 `TODO`。
+系统 SHALL 支持 `POST /api/todos` 创建 Todo。请求需携带 `X-User-Id` 与 `Idempotency-Key`（UUID v4）。请求体字段：`title` 必填（trim 后 10~100 字符）；`description` 可选（≤500 字符，空串等价 null）；`priority` 可选（枚举 `LOW`/`MEDIUM`/`HIGH`，缺省 `MEDIUM`）；`tags` 可选（≤5 个，每个 1~20 字符，重复自动去重，缺省 `[]`）；`dueAt` 可选（ISO-8601 或 null，缺省 null）。单用户最多 1000 条 Todo。长度按 Unicode code point 计数。创建结果的 `status` 固定为 `TODO`。
 
 #### Scenario: 正常创建
 
@@ -70,11 +70,17 @@
 - **WHEN** `dueAt` 不是合法的 ISO-8601 格式
 - **THEN** 返回 HTTP 400 与统一错误结构
 
+#### Scenario: 超过单用户数量上限
+
+- **WHEN** 当前用户已有 1000 条 Todo 时再次创建
+- **THEN** 返回 HTTP 400，message 为 `单用户最多支持 1000 条待办`
+- **AND** 不产生新数据
+
 #### Scenario: 重复点击创建
 
-- **WHEN** 使用相同 `Idempotency-Key` 重复提交创建请求
+- **WHEN** 使用相同 `Idempotency-Key` 串行或并发重复提交创建请求（即使请求体与首次不同）
 - **THEN** 仅创建一条 Todo
-- **AND** 重复请求返回首次创建结果（HTTP 200，id 与首次相同）
+- **AND** 所有请求均返回首次创建结果（HTTP 200，id 与首次相同）
 
 #### Scenario: 缺少幂等键
 
@@ -83,13 +89,13 @@
 
 ### Requirement: 查询 Todo 列表
 
-系统 SHALL 支持 `GET /api/todos` 返回当前用户的全部 Todo，按 `createdAt` 降序排列。
+系统 SHALL 支持 `GET /api/todos` 返回当前用户的全部 Todo，按 `createdAt` 降序排列，同刻按 `id` 升序。
 
 #### Scenario: 正常查询
 
 - **WHEN** 当前用户已有若干 Todo 时查询列表
 - **THEN** 返回 HTTP 200，`code=0`
-- **AND** data 为按 createdAt 降序的 Todo 数组
+- **AND** data 为按 createdAt 降序（同刻按 id 升序）的 Todo 数组
 
 #### Scenario: 空列表
 
@@ -98,7 +104,12 @@
 
 ### Requirement: 更新 Todo
 
-系统 SHALL 支持 `PATCH /api/todos/{id}` 部分更新 `title`（10~100）、`description`（≤500）、`status`、`priority`、`tags`（整体替换）、`dueAt`（传 null 表示清除），至少提供一项，更新成功后 `updatedAt` 刷新。
+系统 SHALL 支持 `PATCH /api/todos/{id}` 部分更新 `title`（10~100）、`description`（≤500，传 null 清除）、`status`、`priority`、`tags`（整体替换）、`dueAt`（传 null 清除），至少提供一项（空 body 或全部字段缺失 → 400），显式传 null 视为提供了该字段，更新成功后 `updatedAt` 刷新。
+
+#### Scenario: 空更新
+
+- **WHEN** 请求体为空 body、`{}` 或未提供任何可更新字段
+- **THEN** 返回 HTTP 400，message 为 `至少提供一个待更新字段`
 
 #### Scenario: 正常更新状态
 
@@ -111,6 +122,12 @@
 - **WHEN** 提交 `{"tags":["紧急"],"priority":"HIGH","dueAt":"2026-11-01T10:00:00+08:00"}`
 - **THEN** 返回 HTTP 200
 - **AND** data.tags/priority/dueAt 均为新值
+
+#### Scenario: 清除描述与截止时间
+
+- **WHEN** 对已有描述与截止时间的 Todo 提交 `{"description":null,"dueAt":null}`
+- **THEN** 返回 HTTP 200
+- **AND** data.description 与 data.dueAt 均为 null
 
 #### Scenario: 更新时字段校验失败
 
@@ -162,13 +179,18 @@
 
 ### Requirement: 统一响应与异常
 
-系统 SHALL 对所有接口返回统一响应结构 `{code, message, data}`；异常统一由全局异常处理转换为错误结构，不泄露内部实现细节。
+系统 SHALL 对所有接口返回统一响应结构 `{code, message, data}`；异常统一由全局异常处理转换为错误结构，不泄露内部实现细节。多个校验错误并存时，按 `X-User-Id` → 路径 id 格式 → `Idempotency-Key` → 请求体字段（按声明顺序）返回首个错误。
 
 #### Scenario: 错误结构一致
 
 - **WHEN** 任意校验失败或业务异常发生
 - **THEN** 响应体均为 `{"code":<错误码>,"message":"<原因>","data":null}`
 - **AND** 错误码与 HTTP 状态一致（400 / 404）
+
+#### Scenario: 请求体不是合法 JSON
+
+- **WHEN** 请求体无法解析为 JSON（如语法错误）
+- **THEN** 返回 HTTP 400 与统一错误结构
 
 #### Scenario: 未捕获异常
 
