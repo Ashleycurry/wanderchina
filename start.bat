@@ -8,7 +8,7 @@ set "FRONTEND=%ROOT%frontend"
 echo ==============================================
 echo   WanderChina ���ؿ�������
 echo   ���? Spring Boot  -^> http://localhost:8080
-echo   ǰ��: Vite + React -^> http://localhost:5173
+echo   ǰ��: Next.js 14 -^> http://localhost:3000
 echo ==============================================
 echo.
 
@@ -37,12 +37,12 @@ echo [1/2] ������˴���?..
 start "WanderChina ���?:8080" /D "%BACKEND%" cmd /k "chcp 65001 >nul && mvn spring-boot:run"
 
 echo [2/2] ����ǰ�˴���...
-start "WanderChina ǰ�� :5173" /D "%FRONTEND%" cmd /k "chcp 65001 >nul && npm run dev"
+start "WanderChina ǰ�� :3000" /D "%FRONTEND%" cmd /k "chcp 65001 >nul && npm run dev"
 
 echo.
 echo �ȴ���������������������...
 ping -n 11 127.0.0.1 >nul
-start "" http://localhost:5173
+start "" http://localhost:3000
 
 echo.
 echo ���������رձ����ڲ�Ӱ����񣻹رն�Ӧ���񴰿ڼ�ֹͣ�÷���?

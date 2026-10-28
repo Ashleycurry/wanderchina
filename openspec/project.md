@@ -8,9 +8,10 @@ WanderChina：基于 Harness（Qoder）+ OpenSpec + Superpowers 的 AI coding �
 ## Tech Stack
 
 - 后端：Java 21 + Spring Boot 4.1.2（Maven 单模块，端口 8080），包根 `com.wanderchina`
-- 前端：Vite 7 + React 19 + TypeScript（npm 管理，端口 5173），开发环境 `/api` 代理到 8080
+- 前端：Next.js 14.2（App Router）+ React 18.3 + TypeScript 5.9 + Tailwind CSS 3.4 + shadcn/ui（npm 管理，端口 3000），开发环境 `/api` 由 rewrites 代理到 8080
 - 数据库：暂未接入（不引入 JPA/MyBatis/数据源）
 - 工程方法：OpenSpec（规范驱动开发）+ Superpowers 技能库
+- 选型硬约束（版本基线与「刻意不引入」清单）：见 `AGENTS.md` → 技术选型约束
 
 ## Project Conventions
 

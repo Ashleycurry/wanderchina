@@ -36,7 +36,7 @@
 │   ├── config.yaml         # OpenSpec 配置
 │   └── project.md          # 项目上下文（技术栈、约定、约束）
 ├── frontend/               # 前端子仓库（submodule → wanderchina-frontend）
-│                           #   Vite 7 + React 19 + TypeScript，端口 5173
+│                           #   Next.js 14 App Router + React 18 + TypeScript + Tailwind + shadcn/ui，端口 3000
 ├── backend/                # 后端子仓库（submodule → wanderchina-backend）
 │                           #   Spring Boot 4.1.2 + Java 21，端口 8080
 ├── .gitmodules             # 子模块配置
@@ -79,13 +79,13 @@ Windows 下双击根目录 **`start.bat`** 即可一键启动（自动开两个�
 cd backend
 mvn spring-boot:run
 
-# 前端（端口 5173，/api 代理到 8080）
+# 前端（端口 3000，/api 由 rewrites 代理到 8080）
 cd frontend
 npm install
 npm run dev
 ```
 
-验证：浏览器打开 http://localhost:5173 ，页面应显示 hello。
+验证：浏览器打开 http://localhost:3000 ，页面应显示 hello。
 
 后端接口：
 
@@ -96,7 +96,7 @@ npm run dev
 
 ```powershell
 cd backend; mvn test        # 后端集成测试
-cd frontend; npm run build  # 前端类型检查 + 生产构建
+cd frontend; npm run build  # 前端生产构建（next build）
 ```
 
 ### 4. 参考

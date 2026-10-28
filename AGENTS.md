@@ -47,6 +47,35 @@
 - 子仓库推送后，回根仓库提交新的 gitlink（根仓库只记录子仓库的 commit 指针）
 - 本地开发：根目录双击 `start.bat` 一键启动，或在 `frontend/`、`backend/` 内分别启动
 
+## 技术选型约束
+
+技术选型是硬约束：新增或更换框架、引入关键依赖，必须先提 `openspec/changes/<name>/` 提案并经用户确认，禁止在实现过程中顺手引入。
+
+| 层 | 选型 | 版本基线 |
+| --- | --- | --- |
+| 前端框架 | React + Next.js（App Router） | React 18.3.1 / Next.js 14.2.x |
+| 前端路由 | App Router | 目录即路由（`src/app/**/page.tsx`） |
+| 前端样式 | Tailwind CSS + shadcn/ui | Tailwind 3.4 / shadcn new-york |
+| 前端语言 | TypeScript | 5.9 |
+| 前端包管理 | npm | 不使用 pnpm / yarn |
+| 后端框架 | Spring Boot（`spring-boot-starter-web`） | 4.1.2 |
+| 后端语言 | Java | 21 |
+| 后端构建 | Maven + `spring-boot-maven-plugin` | 本机配置 aliyun 镜像 |
+
+刻意不引入（引入需提案）：
+
+- 数据库与 ORM：无 JPA / MyBatis / 数据源，持久化方案待专门变更
+- 前端状态管理：无 Redux / Zustand / Jotai，优先 React 内置状态
+- 前端黑盒 UI 库：组件统一用 shadcn/ui 生成到 `src/components/ui/`，源码可直接改
+- 前端测试框架：验收依赖 `npm run build`（next build）
+
+固定约定：
+
+- 分工：React 负责组件拆分、Next.js 负责路由与页面组织、TypeScript 负责类型约束、Tailwind CSS 负责排版、shadcn/ui 负责可直接改源码的组件骨架
+- 端口：前端 3000、后端 8080；开发环境 `/api` 由 Next.js rewrites 转发到 8080
+- 后端包根 `com.wanderchina`，REST 控制器按业务域分包
+- 字段命名前后端统一小驼峰（camelCase）
+
 ## 角色分工
 
 - 子代理（subagent）定义位于 `.qoder/agents/`，规划说明见该目录下的 README.md
