@@ -38,7 +38,7 @@
 ├── frontend/               # 前端子仓库（submodule → wanderchina-frontend）
 │                           #   Next.js 14 App Router + React 18 + TypeScript + Tailwind + shadcn/ui，端口 3000
 ├── backend/                # 后端子仓库（submodule → wanderchina-backend）
-│                           #   Spring Boot 4.1.2 + Java 21，端口 8080
+│                           #   Spring Boot 3.5.x + Spring AI + Java 21 + MySQL 8 + Flyway，端口 8080
 ├── .gitmodules             # 子模块配置
 ├── .gitignore
 ├── AGENTS.md               # 所有 AI 代理的根级指令
@@ -72,7 +72,20 @@ irm https://raw.githubusercontent.com/Fission-AI/OpenSpec/main/scripts/binary/in
 
 Windows 下双击根目录 **`start.bat`** 即可一键启动（自动开两个服务窗口并打开浏览器）。
 
-也可手动分别启动（环境要求：JDK 21+、Maven 3.9+、Node.js 20+）：
+也可手动分别启动（环境要求：JDK 21+、Maven 3.9+、Node.js 20+、MySQL 8）。
+
+后端首次启动前需准备数据库与环境变量：
+
+```powershell
+# 1. 建库（一次即可）
+mysql -u root -p -e "CREATE DATABASE wanderchina CHARACTER SET utf8mb4;"
+
+# 2. 环境变量（按需覆盖，缺省值见 application.yml）
+$env:DB_USERNAME="root"; $env:DB_PASSWORD="你的密码"
+$env:AI_API_KEY="你的模型密钥"; $env:AI_BASE_URL="https://api.openai.com"; $env:AI_MODEL="gpt-4o-mini"
+```
+
+> 数据库接入采用占位策略：`pom.xml` 与配置已声明，依赖安装（`mvn` 首次构建）与数据库连接需在环境就绪后执行；Flyway 会在启动时自动执行 `db/migration` 下的迁移脚本。
 
 ```powershell
 # 后端（端口 8080）
@@ -95,7 +108,7 @@ npm run dev
 测试与构建：
 
 ```powershell
-cd backend; mvn test        # 后端集成测试
+cd backend; mvn test        # 后端集成测试（需 MySQL 已建库）
 cd frontend; npm run build  # 前端生产构建（next build）
 ```
 

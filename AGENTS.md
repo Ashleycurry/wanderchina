@@ -36,8 +36,8 @@
 | 目录 | 用途 |
 | --- | --- |
 | `openspec/` | 规格与变更提案（单一事实来源） |
-| `frontend/` | 前端子仓库（submodule → wanderchina-frontend；Vite 7 + React 19 + TypeScript，端口 5173） |
-| `backend/` | 后端子仓库（submodule → wanderchina-backend；Spring Boot 4.1.2 + Java 21，端口 8080） |
+| `frontend/` | 前端子仓库（submodule → wanderchina-frontend；Next.js 14 App Router + React 18 + TypeScript，端口 3000） |
+| `backend/` | 后端子仓库（submodule → wanderchina-backend；Spring Boot 3.5.x + Spring AI + Java 21 + MySQL 8 + Flyway，端口 8080） |
 | `.qoder/` | 代理框架配置（agents / commands / rules / skills） |
 
 ## 子仓库（Submodule）约定
@@ -58,20 +58,25 @@
 | 前端样式 | Tailwind CSS + shadcn/ui | Tailwind 3.4 / shadcn new-york |
 | 前端语言 | TypeScript | 5.9 |
 | 前端包管理 | npm | 不使用 pnpm / yarn |
-| 后端框架 | Spring Boot（`spring-boot-starter-web`） | 4.1.2 |
+| 后端框架 | Spring Boot（`spring-boot-starter-web`） | 3.5.x |
+| 后端 AI | Spring AI（`spring-ai-starter-model-openai`，OpenAI 兼容协议） | 1.0.x |
+| 后端数据访问 | JdbcTemplate（`spring-boot-starter-jdbc`） | 不引入 JPA / MyBatis |
+| 数据库 | MySQL | 8.x（库名 `wanderchina`，凭据走环境变量） |
+| 数据迁移 | Flyway（`flyway-core` + `flyway-mysql`） | 脚本位于 `db/migration`，启动自动执行 |
 | 后端语言 | Java | 21 |
 | 后端构建 | Maven + `spring-boot-maven-plugin` | 本机配置 aliyun 镜像 |
 
 刻意不引入（引入需提案）：
 
-- 数据库与 ORM：无 JPA / MyBatis / 数据源，持久化方案待专门变更
+- ORM 与内存库：无 JPA / MyBatis / H2，数据访问统一用 JdbcTemplate，schema 由 Flyway 管理
 - 前端状态管理：无 Redux / Zustand / Jotai，优先 React 内置状态
 - 前端黑盒 UI 库：组件统一用 shadcn/ui 生成到 `src/components/ui/`，源码可直接改
 - 前端测试框架：验收依赖 `npm run build`（next build）
 
 固定约定：
 
-- 分工：React 负责组件拆分、Next.js 负责路由与页面组织、TypeScript 负责类型约束、Tailwind CSS 负责排版、shadcn/ui 负责可直接改源码的组件骨架
+- 前端分工：React 负责组件拆分、Next.js 负责路由与页面组织、TypeScript 负责类型约束、Tailwind CSS 负责排版、shadcn/ui 负责可直接改源码的组件骨架
+- 后端分工：Spring Boot 负责工程骨架、Spring AI 负责把模型能力接进业务、Java 21 统一语言版本、Maven 管依赖和构建、MySQL 存数据、Flyway 管数据库迁移
 - 端口：前端 3000、后端 8080；开发环境 `/api` 由 Next.js rewrites 转发到 8080
 - 后端包根 `com.wanderchina`，REST 控制器按业务域分包
 - 字段命名前后端统一小驼峰（camelCase）
