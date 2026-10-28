@@ -74,18 +74,20 @@ Windows 下双击根目录 **`start.bat`** 即可一键启动（自动开两个�
 
 也可手动分别启动（环境要求：JDK 21+、Maven 3.9+、Node.js 20+、MySQL 8）。
 
-后端首次启动前需准备数据库与环境变量：
+数据库配置当前留空（`application.yml` 中 datasource / flyway 为注释模板，后续再启用）；启用步骤：
 
 ```powershell
 # 1. 建库（一次即可）
 mysql -u root -p -e "CREATE DATABASE wanderchina CHARACTER SET utf8mb4;"
 
-# 2. 环境变量（按需覆盖，缺省值见 application.yml）
+# 2. 取消 application.yml 中 datasource / flyway 注释
+
+# 3. 环境变量（按需覆盖）
 $env:DB_USERNAME="root"; $env:DB_PASSWORD="你的密码"
 $env:AI_API_KEY="你的模型密钥"; $env:AI_BASE_URL="https://api.openai.com"; $env:AI_MODEL="gpt-4o-mini"
 ```
 
-> 数据库接入采用占位策略：`pom.xml` 与配置已声明，依赖安装（`mvn` 首次构建）与数据库连接需在环境就绪后执行；Flyway 会在启动时自动执行 `db/migration` 下的迁移脚本。
+> 数据库留空期间后端不可启动；启用后 Flyway 会在启动时自动执行 `db/migration` 下的迁移脚本。
 
 ```powershell
 # 后端（端口 8080）
@@ -108,7 +110,7 @@ npm run dev
 测试与构建：
 
 ```powershell
-cd backend; mvn test        # 后端集成测试（需 MySQL 已建库）
+cd backend; mvn test        # 后端集成测试（需先启用数据库配置）
 cd frontend; npm run build  # 前端生产构建（next build）
 ```
 

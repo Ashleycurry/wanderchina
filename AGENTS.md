@@ -61,7 +61,7 @@
 | 后端框架 | Spring Boot（`spring-boot-starter-web`） | 3.5.x |
 | 后端 AI | Spring AI（`spring-ai-starter-model-openai`，OpenAI 兼容协议） | 1.0.x |
 | 后端数据访问 | JdbcTemplate（`spring-boot-starter-jdbc`） | 不引入 JPA / MyBatis |
-| 数据库 | MySQL | 8.x（库名 `wanderchina`，凭据走环境变量） |
+| 数据库 | MySQL | 8.x（配置暂留空，后续取消注释启用；凭据走环境变量） |
 | 数据迁移 | Flyway（`flyway-core` + `flyway-mysql`） | 脚本位于 `db/migration`，启动自动执行 |
 | 后端语言 | Java | 21 |
 | 后端构建 | Maven + `spring-boot-maven-plugin` | 本机配置 aliyun 镜像 |

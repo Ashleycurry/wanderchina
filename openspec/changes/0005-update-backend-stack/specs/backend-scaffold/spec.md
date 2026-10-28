@@ -2,41 +2,46 @@
 
 ### Requirement: Spring Boot 工程可构建并可运行
 
-系统 SHALL 提供位于 `backend/` 的 Maven 单模块 Spring Boot 3.5.x 工程（Java 21），在依赖已下载且本地 MySQL 8 已建库的前提下，`mvn test` 与 `mvn spring-boot:run` 均可成功执行。
+系统 SHALL 提供位于 `backend/` 的 Maven 单模块 Spring Boot 3.5.x 工程（Java 21）；在依赖已下载且数据库配置启用（取消 `application.yml` 中 datasource / flyway 注释）的前提下，`mvn test` 与 `mvn spring-boot:run` 均可成功执行。数据库配置留空期间，后端不可启动（属预期）。
 
 #### Scenario: Maven 测试构建通过
 
-- **WHEN** 本地 MySQL 已建库，在 `backend/` 下执行 `mvn -q test`
+- **WHEN** 数据库配置已启用，在 `backend/` 下执行 `mvn -q test`
 - **THEN** 构建成功且所有测试通过
 
 #### Scenario: 应用启动并监听 8080
 
-- **WHEN** 本地 MySQL 已建库，执行 `mvn spring-boot:run`
+- **WHEN** 数据库配置已启用，执行 `mvn spring-boot:run`
 - **THEN** 应用在 8080 端口启动，Flyway 迁移执行成功，日志无错误
 
 ## ADDED Requirements
 
 ### Requirement: MySQL 数据源与数据访问
 
-系统 SHALL 通过 `spring-boot-starter-jdbc`（JdbcTemplate）接入 MySQL 8，默认连接 `localhost:3306/wanderchina`，账号密码由环境变量注入，不在配置文件中出现明文凭据；不引入 JPA / MyBatis。
+系统 SHALL 通过 `spring-boot-starter-jdbc`（JdbcTemplate）规划数据访问（不引入 JPA / MyBatis）；数据源配置在 `application.yml` 中以**注释模板**形式保留，本阶段不启用，后续配置时取消注释即可生效。
 
-#### Scenario: 数据源默认指向本地 wanderchina 库
+#### Scenario: 数据源配置留空待启用
 
 - **WHEN** 查看 `application.yml`
-- **THEN** `spring.datasource.url` 默认指向 `localhost:3306/wanderchina`，`username` / `password` 引用环境变量占位（如 `${DB_USERNAME:root}`）
+- **THEN** `datasource` 配置以注释形式存在（含 `jdbc:mysql://localhost:3306/wanderchina` 模板与 `${DB_USERNAME}` / `${DB_PASSWORD}` 占位），未作为运行时配置生效
 
-#### Scenario: 环境就绪后连接可用
+#### Scenario: 启用步骤最小化
 
-- **WHEN** MySQL 已建库、依赖已安装，执行 `mvn spring-boot:run`
-- **THEN** 应用启动成功，无数据源连接错误
+- **WHEN** 后续需要接入数据库
+- **THEN** 取消 `datasource` 与 `flyway` 注释并按需设置 `DB_USERNAME` / `DB_PASSWORD` 即可，无需改动 Java 代码
 
 ### Requirement: Flyway 数据库迁移
 
-系统 SHALL 使用 Flyway（`flyway-core` + `flyway-mysql`）管理数据库 schema 版本，迁移脚本位于 `classpath:db/migration`，应用启动时自动执行。
+系统 SHALL 使用 Flyway（`flyway-core` + `flyway-mysql`）管理数据库 schema 版本；迁移脚本已就位于 `classpath:db/migration`，Flyway 配置以注释模板保留，启用后应用启动时自动执行。
 
-#### Scenario: 空库首次启动自动迁移
+#### Scenario: 迁移脚本就位且配置留空
 
-- **WHEN** 对空库首次启动应用
+- **WHEN** 查看 `application.yml` 与 `src/main/resources/db/migration/`
+- **THEN** Flyway 配置以注释形式存在，`V1__init.sql` 已就位且不含 DDL
+
+#### Scenario: 启用后空库首次启动自动迁移
+
+- **WHEN** 数据库配置已启用且对空库首次启动应用
 - **THEN** Flyway 创建 `flyway_schema_history` 并记录版本 V1，应用启动成功
 
 #### Scenario: 迁移脚本命名与位置规范

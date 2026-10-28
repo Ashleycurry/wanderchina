@@ -17,8 +17,8 @@
 
 ## 2. application.yml 配置占位
 
-- [x] 2.1 新增 `spring.datasource`：`url: jdbc:mysql://localhost:3306/wanderchina?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai`、`username: ${DB_USERNAME:root}`、`password: ${DB_PASSWORD:}`
-- [x] 2.2 新增 `spring.flyway`：`enabled: true`、`locations: classpath:db/migration`、`baseline-on-migrate: true`
+- [x] 2.1 `spring.datasource` 以注释模板保留（不启用）：`jdbc:mysql://localhost:3306/wanderchina?...`、`${DB_USERNAME:root}`、`${DB_PASSWORD:}`，后续配置时取消注释
+- [x] 2.2 `spring.flyway` 以注释模板保留（不启用）：`enabled: true`、`locations: classpath:db/migration`、`baseline-on-migrate: true`
 - [x] 2.3 新增 `spring.ai.openai`：`base-url: ${AI_BASE_URL:https://api.openai.com}`、`api-key: ${AI_API_KEY:not-configured}`、`chat.options.model: ${AI_MODEL:gpt-4o-mini}`（占位默认值不得为真实密钥）
 - **验证**：读取 `application.yml`，三个配置段均存在，凭据均为 env 占位
 
@@ -41,7 +41,7 @@
 
 - [x] AC1 `pom.xml` parent 为 `3.5.6`，`java.version` 仍为 `21`
 - [x] AC2 `pom.xml` 含 `spring-boot-starter-jdbc` / `mysql-connector-j` / `flyway-core` / `flyway-mysql` / `spring-ai-bom` / `spring-ai-starter-model-openai` 六个坐标
-- [x] AC3 `application.yml` 含 `spring.datasource` / `spring.flyway` / `spring.ai.openai` 三段，凭据全为 env 占位
+- [x] AC3 `application.yml` 中 `datasource` / `flyway` 以注释模板留空待启用，`spring.ai.openai` 生效且凭据为 env 占位
 - [x] AC4 `db/migration/V1__init.sql` 存在且不含 DDL
 - [x] AC5 现有 Java 代码零改动（`git diff` 中无 `.java` 文件）
 - [x] AC6 全程未执行 `mvn`、未新增 `~/.m2` 下载（本变更只改文件）

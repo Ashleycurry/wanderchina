@@ -40,12 +40,12 @@ backend/
 - **位置**：默认 `classpath:db/migration`
 - **V1 语义**：空迁移仅用于打通迁移链路；后续建表用 V2 起，**不得修改已执行的 V1**（checksum 校验会失败）
 
-### D5：配置策略与前置条件
+### D5：配置留空策略（数据库后配）
 
-- 引入 `spring-boot-starter-jdbc` 后，没有 datasource 配置应用无法启动，因此 datasource 直接写入 `application.yml`（默认激活）
-- **前置条件**：本地 MySQL 8 已安装，且执行过 `CREATE DATABASE wanderchina CHARACTER SET utf8mb4;`
-- **未就绪时**：`mvn spring-boot:run` 与 3 个 `@SpringBootTest` 会因连不上库失败，属预期状态（与前端「依赖未装」对称）
-- **否决**：引入 H2 作默认库（用户选型无 H2，双数据库语义会掩盖真实问题）
+- 用户决策：数据库部分先留空，后续再配置。`datasource` 与 `flyway` 以注释模板形式保留在 `application.yml`，不作为运行时配置生效
+- **留空期**：引入 `spring-boot-starter-jdbc` 后无 datasource 配置，`mvn spring-boot:run` 与 3 个 `@SpringBootTest` 会因缺少数据源失败，属预期状态（与前端「依赖未装」对称）
+- **启用步骤**（后续配置时）：① 本地安装 MySQL 8 并 `CREATE DATABASE wanderchina CHARACTER SET utf8mb4;` ② 取消 `application.yml` 中 datasource / flyway 注释 ③ 按需设置 `DB_USERNAME` / `DB_PASSWORD`
+- **否决**：引入 H2 作默认库（用户选型无 H2，双数据库语义会掩盖真实问题）；全局排除 DataSourceAutoConfiguration（会让启用数据库多一个易遗忘的开关，偏离最小改动）
 
 ### D6：版本基线
 
