@@ -112,23 +112,51 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 ### Requirement: Hero 内容与搜索占位
 
-系统 SHALL 在 Hero 区块渲染品牌标语与可见搜索框（`role="search"`），搜索框仅做占位交互，不发起真实搜索请求。
+系统 SHALL 在 Hero 区块渲染品牌主视觉、标语与可见搜索框（`role="search"`），搜索框仅做占位交互：提交后展示提示，不发起真实搜索请求、不改变 URL、不产生网络请求。
 
 #### Scenario: 首屏渲染
 
 - **WHEN** 访问 `/`
-- **THEN** Hero 包含标语文本与 `role="search"` 搜索框
+- **THEN** Hero 包含 `h1` 标语文本与 `role="search"` 搜索框
 - **AND** 搜索框为空时提交按钮为 `disabled`
 
 #### Scenario: 背景图降级
 
 - **WHEN** Hero 背景图请求失败或网络较慢
-- **THEN** 展示 CSS 渐变兜底，不出现破图
-- **AND** 骨架预留高度，CLS 为 0
+- **THEN** CSS 渐变兜底层可见，不出现破图
+- **AND** 容器高度固定，CLS 为 0，标语与搜索框保持可读
+
+#### Scenario: 搜索占位交互
+
+- **WHEN** 用户输入关键词并提交搜索框
+- **THEN** 展示 `aria-live="polite"` 提示文案
+- **AND** URL 不变、页面不跳转、Network 无新增请求
+
+#### Scenario: 键盘与读屏语义
+
+- **WHEN** 用户仅用键盘 Tab 或使用屏幕阅读器
+- **THEN** 焦点顺序为输入框 → 提交按钮，且 `focus-visible` 环可见
+- **AND** 搜索区被识别为 `search` landmark，输入框有 sr-only `label`，背景图 `alt=""` 且 `aria-hidden`
+
+### Requirement: Hero 静态区块隔离
+
+Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、不随区块降级状态变化。
+
+#### Scenario: 城市切换不影响 Hero
+
+- **WHEN** 用户将城市从 `SHA` 切换到 `BJA`
+- **THEN** Hero 的标语、副标题、搜索框与背景均不变
+- **AND** 不触发额外数据请求
+
+#### Scenario: 降级隔离
+
+- **WHEN** `/api/home` 任一区块返回 `partialError`
+- **THEN** Hero 正常渲染
+- **AND** 不显示骨架或重试入口
 
 ### Requirement: 功能导航三入口
 
-系统 SHALL 在 `feature-nav` 区块渲染恰好 3 张卡片，链接分别指向社区、景点、AI 三个目标路由。
+系统 SHALL 在 `feature-nav` 区块渲染恰好 3 张卡片，链接分别指向社区、景点、AI 三个目标路由；卡片为纯静态配置，不读取城市上下文、不发起请求、不进入降级态。
 
 #### Scenario: 卡片数量与目标
 
@@ -141,6 +169,18 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 - **WHEN** 城市切换或 `/api/home` 返回 `partialError`
 - **THEN** 功能导航内容不变化，不进入降级态
 
+#### Scenario: 卡片内容与可访问性
+
+- **WHEN** 查看任一卡片
+- **THEN** 包含装饰性图标（`aria-hidden="true"`）、标题与一句话描述
+- **AND** 链接的可读名称等于卡片标题
+
+#### Scenario: 响应式列数
+
+- **WHEN** 视口宽度为 360px 或 ≥640px
+- **THEN** 360px 下三张卡片纵向单列，无横向滚动、描述不溢出
+- **AND** `sm` 及以上为等宽三列，卡片高度对齐
+
 ### Requirement: 城市入口与切换
 
 系统 SHALL 在 `city-grid` 渲染恰好 8 个城市项（`href` 形如 `/city/<slug>`），以 `wc_city` cookie 维护当前城市，默认 `SHA`；切换城市后数据区块全部替换且 URL 不含查询参数。
@@ -149,7 +189,7 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 - **WHEN** 用户首次打开首页且无 `wc_city` cookie
 - **THEN** 返回默认城市 `SHA` 的内容
-- **AND** 写入 `wc_city` cookie 并在后续请求中回传
+- **AND** 响应写入 `wc_city` cookie（`Path=/`、`Max-Age` ≥ 30 天），后续请求按该 cookie 取数
 
 #### Scenario: 切换城市联动
 
@@ -159,12 +199,31 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 #### Scenario: cookie 非法回退
 
-- **WHEN** `wc_city` 取值为非法城市码或写入失败
-- **THEN** 回退 `SHA` 且页面正常渲染，不报错
+- **WHEN** `wc_city` 取值为非法城市码，或 cookie 写入被浏览器拒绝
+- **THEN** 非法值按默认城市 `SHA` 取数；写入失败时保持当前服务端城市
+- **AND** 页面正常渲染，不报错、不白屏
+
+#### Scenario: 城市网格条目与链接
+
+- **WHEN** 查看 `city-grid` 的 DOM
+- **THEN** 存在恰好 8 个城市项，每项含可见图标与城市名
+- **AND** `href` 分别为 `/city/shanghai`、`/city/beijing`、`/city/xian`、`/city/chengdu`、`/city/hangzhou`、`/city/guilin`、`/city/lijiang`、`/city/suzhou`
+
+#### Scenario: 切换为局部刷新
+
+- **WHEN** 用户左键点击非当前城市项
+- **THEN** 仅触发 `router.refresh()` 局部刷新，页面不整页重载
+- **AND** 地址栏 URL 保持 `/`，不新增 `cityCode` / `city` 等查询参数
+
+#### Scenario: 键盘可达与当前城市标识
+
+- **WHEN** 用户仅用键盘 Tab 导航
+- **THEN** 8 个城市项依次可达，`focus-visible` 环可见
+- **AND** 当前城市项带 `aria-current="true"`
 
 ### Requirement: 热门帖子热度排序
 
-系统 SHALL 仅返回 `status IN (open, resolved)` 且 `created_at ≥ now-72h` 的帖子，按 `comment_count ÷ max(1, hours_since_create)` 降序取前 8 条。
+系统 SHALL 仅返回 `status IN (open, resolved)` 且 `created_at ≥ now-72h` 的帖子，按 `comment_count ÷ max(1, hours_since_create)` 降序取前 8 条；同分按 `created_at` 降序保持稳定顺序。
 
 #### Scenario: 排序与条目上限
 
@@ -178,19 +237,95 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 - **THEN** 列表摘要不展示该评论内容，固定显示 `[removed pending review]`
 - **AND** 接口不返回 500
 
+#### Scenario: 脏数据稳定排序
+
+- **WHEN** 出现 `createdAt` 晚于 `now` 或 `commentCount = 0` 的帖子
+- **THEN** `hours_since_create` 取下限 1，零评论热度记 0 并排在末尾
+- **AND** 排序不产生 `NaN`、不抛错
+
+#### Scenario: 纯函数可独立验证
+
+- **WHEN** 执行 `node --test tests/rank-posts.test.mjs`
+- **THEN** 过滤（hidden / 超 72h）、排序（含同分）、边界（未来时间戳 / 0 评论）用例全部通过
+- **AND** 不引入任何第三方测试依赖
+
+### Requirement: 热门帖子列表展示
+
+系统 SHALL 以 Server Component 渲染帖子卡片，包含标题、摘要、作者与评论数，`resolved` 帖子显示文本徽标，空列表显示兜底文案。
+
+#### Scenario: 卡片字段与徽标
+
+- **WHEN** 列表有数据
+- **THEN** 每张卡片包含标题、摘要、作者、评论数
+- **AND** `resolved` 帖子显示「已解决」文本徽标（图标 `aria-hidden`，信息不仅靠颜色）
+
+#### Scenario: 空列表兜底
+
+- **WHEN** 过滤后无任何帖子
+- **THEN** 区块显示兜底文案 `No trending posts for this city yet.`
+- **AND** 不出现空白容器或常驻骨架
+
+#### Scenario: 响应式列数
+
+- **WHEN** 视口宽度为 360px 或 ≥768px
+- **THEN** 360px 下为单列列表，`md` 及以上为两列网格
+- **AND** 摘要超长时截断，不撑破卡片
+
 ### Requirement: 热门景点加权排序
 
-系统 SHALL 返回 `status=published` 的景点 ≤ 8 条，按 `近7日 view_count × 0.7 + popularity_score × 0.3` 降序。
+系统 SHALL 仅返回 `status = published` 的景点，按 `view_count_7d × 0.7 + popularity_score × 0.3` 降序取前 8 条；全部无浏览数据时退化为按 `popularity_score` 降序。
 
 #### Scenario: 加权排序
 
-- **WHEN** 用户查看热门景点且存在浏览数据
-- **THEN** 结果按加权分数降序，数量 ≤ 8
+- **WHEN** 用户查看热门景点
+- **THEN** 结果按 `viewCount7d × 0.7 + popularityScore × 0.3` 降序，数量 ≤ 8
+- **AND** 卡片显示格式化后的浏览量
 
 #### Scenario: 无浏览数据退化
 
-- **WHEN** 全部景点均无浏览数据（`view_count_7d` 为 `null` 或 0）
-- **THEN** 退化为按 `popularity_score` 降序
+- **WHEN** 该城市全部景点 `viewCount7d` 为 `null` 或 0
+- **THEN** 排序退化为按 `popularityScore` 降序
+- **AND** 仍只返回 `published` 景点
+
+#### Scenario: 部分缺失按 0 参与
+
+- **WHEN** 部分景点有浏览数据、部分为 `null`
+- **THEN** `null` 视作 0 参与加权公式，不触发整体退化
+- **AND** 排序不因缺失值抛错
+
+#### Scenario: 纯函数可独立验证
+
+- **WHEN** 执行 `node --test tests/rank-spots.test.mjs`
+- **THEN** 排序（含同分）、退化、`formatViews` 三档数值用例全部通过
+- **AND** 不引入任何第三方测试依赖
+
+### Requirement: 热门景点卡片展示
+
+系统 SHALL 以 Server Component 渲染景点卡片，包含 `next/image` 封面、名称与格式化浏览量，封面固定宽高比，空列表显示兜底文案。
+
+#### Scenario: 卡片字段与格式化
+
+- **WHEN** 列表有数据
+- **THEN** 每张卡片含封面、名称、`formatViews` 结果
+- **AND** `12300` 显示 `12.3k views`、`980` 显示 `980 views`、`1200000` 显示 `1.2m views`
+
+#### Scenario: 封面失败兜底
+
+- **WHEN** 封面图 404 或加载失败
+- **THEN** 图片容器保留渐变底色，名称与浏览量仍可读
+- **AND** 固定宽高比不塌陷
+
+#### Scenario: 空列表兜底
+
+- **WHEN** 过滤后无任何景点
+- **THEN** 区块显示兜底文案 `No attractions for this city yet.`
+- **AND** 不出现空白网格或常驻骨架
+
+#### Scenario: 响应式卡片网格
+
+- **WHEN** 视口宽度为 360px 或 ≥768px
+- **THEN** 360px 下为单列（或两列小卡），`md` 及以上为四列网格
+- **AND** 卡片等高、封面比例一致
 
 ### Requirement: AI 入口与 Ask 跳转
 
@@ -207,6 +342,40 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 - **WHEN** 当前城市为 `SHA` 且用户点击 `Ask`
 - **THEN** 跳转 `/ask?cityCode=SHA`
 - **AND** 无需登录即可发起第 1 次提问
+
+#### Scenario: 无网络请求
+
+- **WHEN** 打开并关闭占位面板
+- **THEN** Network 中无新增请求
+- **AND** 组件源码不含 `fetch` / `axios` 调用
+
+#### Scenario: 切换城市后携带新城市
+
+- **WHEN** 用户将城市从 `SHA` 切换到 `BJA` 后点击 `Ask`
+- **THEN** 跳转 `/ask?cityCode=BJA`
+- **AND** 入口不缓存旧城市代码
+
+### Requirement: AI 入口无障碍与响应式
+
+系统 SHALL 使 AI 入口可纯键盘操作、焦点在打开与关闭之间正确流转，并在移动端避开安全区、不遮挡页面底部内容。
+
+#### Scenario: 键盘可达与焦点管理
+
+- **WHEN** 用户仅用键盘操作
+- **THEN** Tab 可聚焦悬浮按钮，Enter / Space 打开面板
+- **AND** 打开后焦点进入面板，关闭后焦点回到悬浮按钮
+
+#### Scenario: 移动端安全区
+
+- **WHEN** 视口宽度为 360px
+- **THEN** 按钮固定在右下角并避开 `safe-area-inset-bottom`
+- **AND** 不遮挡页面底部可点击元素
+
+#### Scenario: 降级隔离
+
+- **WHEN** `/api/home` 某区块返回 `partialError`
+- **THEN** AI 入口正常渲染与交互
+- **AND** 不显示骨架或重试入口
 
 ### Requirement: 前端样式技术栈基线
 
@@ -254,5 +423,5 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 ## Notes
 
-- 实现顺序：`frontend-styling-stack` → `homepage-shell` → 批 3（`hero` / `feature-nav` / `city-grid`）→ 批 4（`hot-posts` / `hot-spots` / `ai-launcher`）
+- 实现顺序与状态：`frontend-styling-stack` → `homepage-shell` → 批 3（`hero` / `feature-nav` / `city-grid`）→ 批 4（`hot-posts` / `hot-spots` / `ai-launcher`），全部 8 个变更已实施并归档（`openspec/changes/archive/2026-11-02-*`）
 - 本文件由 `changes/*/specs/homepage/spec.md` 的 delta 在归档时合入；模块手册不参与 CLI 校验，仅供实现参考
