@@ -3,7 +3,7 @@
 ## Purpose
 
 WanderChina：基于 Harness（Qoder）+ OpenSpec + Superpowers 的 AI coding 全栈开发项目。
-当前阶段：前后端地基已完成（前端可构建，后端 MySQL / Flyway / Spring AI 骨架就绪）；首页能力域 8 个单元已产出完整规格（`openspec/specs/homepage/`），其中样式基线与骨架两个提案待实施，其余 6 个区块按拓扑依次推进。
+当前阶段：前后端地基已完成（前端可构建，后端 MySQL / Flyway / Spring AI 骨架就绪）；首页能力域 8 个单元已产出完整规格（`openspec/specs/homepage/`）。`frontend-styling-stack` 与 `homepage-shell` 已实施并归档（2026-11-02）；批 3（hero / feature-nav / city-grid）与批 4（hot-posts / hot-spots / ai-launcher）提案均已就绪、待实施。
 
 ## Tech Stack
 

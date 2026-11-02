@@ -19,7 +19,7 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 ### Requirement: 首页骨架与挂载位
 
-系统 SHALL 在 `GET /` 渲染恰好 6 个固定顺序的区块挂载位，取值依次为 `hero`、`feature-nav`、`city-grid`、`hot-posts`、`hot-spots`、`ai-launcher`；页面为 Server Component，骨架不 import 任何区块实现，区块以 `src/components/homepage/regions/` 下的占位组件形式挂载。
+系统 SHALL 在 `GET /` 渲染恰好 6 个固定顺序的区块挂载位，取值依次为 `hero`、`feature-nav`、`city-grid`、`hot-posts`、`hot-spots`、`ai-launcher`；页面为 Server Component，骨架不 import 任何区块实现，区块以 `src/components/homepage/regions/` 下的占位组件形式挂载。完整规格见 `openspec/specs/homepage/homepage-shell.md`。
 
 #### Scenario: 首页可访问且区块齐全
 
@@ -93,6 +93,22 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 - **WHEN** 焦点位于重试按钮并按 Enter 或 Space
 - **THEN** 触发重新取数，骨架保持到数据返回
+
+### Requirement: 降级容器契约
+
+系统 SHALL 提供 `RegionBoundary`（Client Component）统一承载骨架与重试，支持 `skeleton` 档位 `card-row` / `card-grid` / `text-block`，骨架高度按档位预留以减小布局抖动；重试默认调用 `router.refresh()`。
+
+#### Scenario: 骨架档位生效
+
+- **WHEN** 区块以 `skeleton="card-grid"` 传入 `RegionBoundary` 并处于错误态
+- **THEN** 渲染与卡片网格高度近似的骨架
+- **AND** 显示可聚焦的重试按钮
+
+#### Scenario: 无交互依赖
+
+- **WHEN** 调用方未传 `onRetry`
+- **THEN** 点击重试仍能重新取数（默认 `router.refresh()`）
+- **AND** 组件不因缺少回调而报错或禁用按钮
 
 ### Requirement: Hero 内容与搜索占位
 
@@ -194,7 +210,7 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 ### Requirement: 前端样式技术栈基线
 
-系统 SHALL 以 Tailwind CSS 3.4（唯一原子类方案）+ shadcn/ui（源码 vendored、new-york / neutral）+ lucide-react（唯一图标源）作为前端样式基线；全仓唯一 CSS 入口为 `src/app/globals.css`，结构性颜色必须使用语义令牌（`bg-background`、`text-foreground`、`bg-primary` 等），禁止硬编码色值。
+系统 SHALL 以 Tailwind CSS 3.4（唯一原子类方案）+ shadcn/ui（源码 vendored、new-york / neutral）+ lucide-react（唯一图标源）作为前端样式基线；全仓唯一 CSS 入口为 `src/app/globals.css`，结构性颜色必须使用语义令牌（`bg-background`、`text-foreground`、`bg-primary` 等），禁止硬编码色值。完整规格见 `openspec/specs/homepage/frontend-styling-stack.md`。
 
 #### Scenario: 配置符合基线
 
@@ -208,7 +224,35 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 - **WHEN** 检查 `frontend/package.json` 的依赖声明
 - **THEN** 不含 `bootstrap`、`@mui/*`、`antd`、`@chakra-ui/*`、`styled-components`、`@emotion/*`、`sass`、`less`、`framer-motion`
 
+### Requirement: shadcn 组件源码基线
+
+系统 SHALL 在 `frontend/src/components/ui/` 提供可编辑的 vendored 组件源码，首个基线包含 `button.tsx` 与 `input.tsx`；组件变体使用 `cva` 声明，类名合并使用 `cn()`，不通过联网 CLI 生成，不引入黑盒 UI 包。
+
+#### Scenario: 基线组件可导入
+
+- **WHEN** 业务组件中 `import { Button } from '@/components/ui/button'` 与 `import { Input } from '@/components/ui/input'`
+- **THEN** TypeScript 类型检查与 `npm run build` 通过，组件可正常渲染（Button 支持 `variant` / `size`，Input 支持受控输入）
+
+#### Scenario: 变体与类名规范
+
+- **WHEN** 检查 `button.tsx` 与 `input.tsx`
+- **THEN** 变体通过 `cva` 的 `variants` / `defaultVariants` 声明，类名合并通过 `cn()`，文件内无硬编码色值（`#hex` / `rgb(`）
+
+### Requirement: 样式约束可校验
+
+系统 SHALL 使样式禁止项可通过命令检查：无硬编码色值、无 `max-*` 响应式变体、无 `.module.css` / `.scss` / `.less`、无 inline `style`（动态 CSS 变量除外）、不新增 npm 依赖。
+
+#### Scenario: 禁止项检查无命中
+
+- **WHEN** 按 tasks 中的 grep 命令检查 `frontend/src`
+- **THEN** 硬编码色值、`max-(sm|md|lg|xl):`、样式预处理文件、内联 `style` 四项检查均无命中（`globals.css` 的主题变量定义除外）
+
+#### Scenario: 构建通过
+
+- **WHEN** 在 `frontend/` 执行 `npm run build`（NTFS 副本 `D:\wanderchina-frontend`）
+- **THEN** 构建成功，无 TypeScript 或 ESLint 错误
+
 ## Notes
 
-- 实现顺序：`frontend-styling-stack` → `homepage-shell` → 其余 6 个区块
+- 实现顺序：`frontend-styling-stack` → `homepage-shell` → 批 3（`hero` / `feature-nav` / `city-grid`）→ 批 4（`hot-posts` / `hot-spots` / `ai-launcher`）
 - 本文件由 `changes/*/specs/homepage/spec.md` 的 delta 在归档时合入；模块手册不参与 CLI 校验，仅供实现参考

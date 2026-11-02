@@ -25,13 +25,19 @@ openspec/
 │       └── frontend-styling-stack.md
 └── changes/                   # 在途变更提案
     ├── 0003-todo-module/      # 搁置（未实施）
-    ├── frontend-styling-stack/
-    ├── homepage-shell/
+    ├── homepage-hero/
+    ├── homepage-feature-nav/
+    ├── homepage-city-grid/
+    ├── homepage-hot-posts/
+    ├── homepage-hot-spots/
+    ├── homepage-ai-launcher/
     └── archive/               # 已完成变更（YYYY-MM-DD-<name>）
         ├── 2026-10-27-0001-bootstrap-openspec/
         ├── 2026-10-27-0002-add-fullstack-scaffold/
         ├── 2026-10-28-0004-update-frontend-stack/
-        └── 2026-10-28-0005-update-backend-stack/
+        ├── 2026-10-28-0005-update-backend-stack/
+        ├── 2026-11-02-frontend-styling-stack/
+        └── 2026-11-02-homepage-shell/
 ```
 
 ## 规格分层约定
@@ -51,16 +57,16 @@ openspec/
 
 | # | 单元 | 规格 | 提案 | 实施 | 归档 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `frontend-styling-stack` | ✅ `specs/homepage/frontend-styling-stack.md` | ✅ `changes/frontend-styling-stack/` | ⏳ 待确认后 apply | — |
-| 2 | `homepage-shell` | ✅ `specs/homepage/homepage-shell.md` | ✅ `changes/homepage-shell/` | ⏳ 待确认后 apply | — |
-| 3 | `homepage-hero` | ✅ `specs/homepage/homepage-hero.md` | — | — | — |
-| 4 | `homepage-feature-nav` | ✅ `specs/homepage/homepage-feature-nav.md` | — | — | — |
-| 5 | `homepage-city-grid` | ✅ `specs/homepage/homepage-city-grid.md` | — | — | — |
-| 6 | `homepage-hot-posts` | ✅ `specs/homepage/homepage-hot-posts.md` | — | — | — |
-| 7 | `homepage-hot-spots` | ✅ `specs/homepage/homepage-hot-spots.md` | — | — | — |
-| 8 | `homepage-ai-launcher` | ✅ `specs/homepage/homepage-ai-launcher.md` | — | — | — |
+| 1 | `frontend-styling-stack` | ✅ `specs/homepage/frontend-styling-stack.md` | ✅ `changes/archive/2026-11-02-frontend-styling-stack/` | ✅ 已实施 | ✅ 2026-11-02 |
+| 2 | `homepage-shell` | ✅ `specs/homepage/homepage-shell.md` | ✅ `changes/archive/2026-11-02-homepage-shell/` | ✅ 已实施 | ✅ 2026-11-02 |
+| 3 | `homepage-hero` | ✅ `specs/homepage/homepage-hero.md` | ✅ `changes/homepage-hero/` | ⏳ 待实施 | — |
+| 4 | `homepage-feature-nav` | ✅ `specs/homepage/homepage-feature-nav.md` | ✅ `changes/homepage-feature-nav/` | ⏳ 待实施 | — |
+| 5 | `homepage-city-grid` | ✅ `specs/homepage/homepage-city-grid.md` | ✅ `changes/homepage-city-grid/` | ⏳ 待实施 | — |
+| 6 | `homepage-hot-posts` | ✅ `specs/homepage/homepage-hot-posts.md` | ✅ `changes/homepage-hot-posts/` | ⏳ 待实施 | — |
+| 7 | `homepage-hot-spots` | ✅ `specs/homepage/homepage-hot-spots.md` | ✅ `changes/homepage-hot-spots/` | ⏳ 待实施 | — |
+| 8 | `homepage-ai-launcher` | ✅ `specs/homepage/homepage-ai-launcher.md` | ✅ `changes/homepage-ai-launcher/` | ⏳ 待实施 | — |
 
-依赖拓扑：`frontend-styling-stack` → `homepage-shell` → `city-grid`（城市上下文）→ 其余区块。
+依赖拓扑：`frontend-styling-stack` → `homepage-shell` → 批 3（`hero` / `feature-nav` / `city-grid` 可并行）→ 批 4（`hot-posts` → `hot-spots` 需串行，两者共改 `load.ts` / `mock-data.ts`；`ai-launcher` 独立可并行）。
 
 ### 历史能力
 
