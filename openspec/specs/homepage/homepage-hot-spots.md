@@ -15,7 +15,7 @@
 | 数据口径 | 仅 `status = published`；最多 8 条 |
 | 排序规则 | `近 7 日 view_count × 0.7 + popularity_score × 0.3` 降序 |
 | 退化规则 | 全部无浏览数据时按 `popularity_score` 降序 |
-| 卡片内容 | 封面（`next/image`）、名称、格式化浏览量、链接 `/city/<slug>` |
+| 卡片内容 | 封面（`next/image`）、名称、格式化浏览量；整卡链接到当前城市页 `/city/<citySlug>` |
 | mock 契约 | `src/mocks/hot-spots.ts`：`PopularDestination` × 8 条乱序 |
 | 纯函数 | `src/lib/rank-spots.ts`：`rankHotSpots()`；`src/lib/format-views.ts`：`formatViews()` |
 
@@ -103,6 +103,13 @@
 - **THEN** 按原值参与排序但不渲染异常样式
 - **AND** 不因越界值导致排序崩溃
 
+### S12 卡片跳转城市页【正常】
+
+- **WHEN** 卡片已传入当前城市 slug
+- **THEN** 整张卡片包裹 `<Link href="/city/<citySlug>">`，跳转当前城市页
+- **AND** 链接可键盘聚焦，`focus-visible` 环可见；未传 slug 时降级为不可点击卡片
+- **AND** 不使用景点自身的 `slug` 拼链接（景点详情页由后续 spec 承接）
+
 ## 3. 数据结构
 
 ### 3.1 mock 契约
@@ -112,7 +119,7 @@ export type SpotStatus = 'published' | 'draft' | 'archived';
 
 export interface PopularDestination {
   id: string;
-  /** 必填；城市 slug，链接 /city/<slug> */
+  /** 必填；景点 slug（本期不用于链接，景点详情页由后续 spec 承接） */
   slug: string;
   /** 必填；展示名，1-40 字符 */
   name: string;
@@ -142,6 +149,8 @@ export function formatViews(views: number): string;
 /** src/components/homepage/hot-spots.tsx —— Server Component */
 export interface HotSpotsProps {
   spots: PopularDestination[];
+  /** 可选；当前城市 slug，卡片据此跳转 /city/<citySlug>；缺省时不渲染链接 */
+  citySlug?: string;
   className?: string;
 }
 ```
@@ -153,7 +162,8 @@ export interface HotSpotsProps {
 | 加权公式 | `viewCount7d × 0.7 + popularityScore × 0.3`（`null` 视作 0） | — |
 | 退化条件 | 全部 `viewCount7d` 为 `null` 或 0 | 按 `popularityScore` 降序 |
 | 条数 | 最多 8 条 | 8 |
-| 封面 | `next/image` + 固定宽高比（如 4:3）+ `sizes` 声明 | — |
+| 封面 | `next/image` + 固定宽高比（如 4:3）+ `sizes` 声明；装饰性图 `alt=""` + `aria-hidden` | — |
+| 卡片链接 | 整卡 `<Link href="/city/<citySlug>">`；`citySlug` 由骨架传入 | 无链接（纯卡片） |
 | 格式化 | ≥1e6 用 `m`，≥1e3 用 `k`，保留 1 位小数 | — |
 
 ### 3.5 文件与依赖
@@ -164,7 +174,9 @@ frontend/src/
 ├── lib/
 │   ├── rank-spots.ts                  # rankHotSpots
 │   └── format-views.ts                # formatViews
-└── components/homepage/hot-spots.tsx  # Server Component 卡片网格
+└── components/homepage/
+    ├── hot-spots.tsx                  # Server Component 卡片网格
+    └── regions/hot-spots-region.tsx   # 挂载中间层：透传 spots 与 citySlug
 
 frontend/tests/rank-spots.test.mjs     # node --test 断言（排序 + 退化）
 ```
@@ -184,6 +196,7 @@ frontend/tests/rank-spots.test.mjs     # node --test 断言（排序 + 退化）
 - [ ] `12300 → 12.3k views`、`980 → 980 views`、`1200000 → 1.2m views`
 - [ ] 空列表显示兜底文案，无空白容器
 - [ ] 封面失败时渐变兜底，布局不塌陷
+- [ ] 封面为 `next/image` 且 `alt=""` + `aria-hidden`；整卡链接到 `/city/<citySlug>`
 
 ### 4.3 排序验证（node --test）
 
@@ -199,7 +212,7 @@ frontend/tests/rank-spots.test.mjs     # node --test 断言（排序 + 退化）
 
 ### 4.5 手动验证步骤
 
-1. `node --test frontend/tests/`，确认排序、退化和格式化断言通过
+1. `node --test frontend/tests/rank-spots.test.mjs`，确认排序、退化和格式化断言通过
 2. `npm run build && npm run start`，`curl` 断言 8 张卡片与格式化文案
 3. 阻断封面图请求，检查渐变兜底与布局
 4. 切换城市确认列表刷新；模拟 `partialError` 检查骨架 + 重试

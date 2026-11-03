@@ -97,7 +97,7 @@ WanderChina 前端样式技术栈基线：Next.js 14 App Router + Tailwind CSS 3
 - 结构色只用语义类：`bg-background`、`text-foreground`、`bg-card`、`text-muted-foreground`、`bg-primary`、`text-primary-foreground`、`border-border`、`ring-ring`、`bg-destructive`
 - 装饰性渐变/遮罩允许 Tailwind 调色板 + 透明度（如 `bg-black/40`），但禁止 `#hex`、`rgb()` 硬编码
 - 自定义颜色必须新增 CSS 变量并在 `tailwind.config.ts` 注册，不在组件内写色值
-- 圆角统一 `rounded-lg` / `rounded-md` / `rounded-sm`（由 `--radius` 派生），禁止 `rounded-[7px]` 之类魔法值
+- 圆角只用主题派生值：卡片/图片容器 `rounded-lg`，控件 `rounded-md` / `rounded-sm`，大面板与 Hero 可用 `rounded-xl`，胶囊与圆形控件用 `rounded-full`；禁止 `rounded-[7px]` 之类魔法值
 - 本文档所称「品牌主色」当前即 `--primary`（neutral 0 0% 9%），品牌定稿后只改变量
 
 ### 3.6 图片与图标
@@ -109,10 +109,10 @@ WanderChina 前端样式技术栈基线：Next.js 14 App Router + Tailwind CSS 3
 
 ### 3.7 动效与无障碍
 
-- 动效仅限 `transform` / `opacity`，时长 150–300ms
-- `prefers-reduced-motion: reduce` 时关闭过渡（`motion-reduce:transition-none` 等）
+- 动效仅限 `transform` / `opacity`，时长 150–300ms；颜色/边框变化不做过渡（`Button` 等控件不写 `transition-colors`）
+- `prefers-reduced-motion: reduce` 时关闭过渡：`globals.css` 统一用媒体查询把 `transition-duration` / `animation-duration` 压到 `0.01ms`，覆盖骨架 `animate-pulse` 与所有悬停态
 - 交互元素必须有 `focus-visible` 可见环（`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`）
-- 正文文字对比度 ≥ 4.5:1；触摸目标 ≥ 44×44px
+- 正文文字对比度 ≥ 4.5:1；触摸目标 ≥ 44×44px（`Button` 默认 `h-11`、`icon` 档 `h-11 w-11`、`Input` `h-11`）
 - 不用颜色单独传递状态（如「已解决」必须带文本或图标）
 
 ## 4. 数据结构（配置契约）
@@ -191,7 +191,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -201,7 +201,7 @@ const buttonVariants = cva(
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
       },
-      size: { default: 'h-10 px-4 py-2', sm: 'h-9 px-3', lg: 'h-11 px-8', icon: 'h-10 w-10' },
+      size: { default: 'h-11 px-4 py-2', sm: 'h-11 px-3', lg: 'h-12 px-8', icon: 'h-11 w-11' },
     },
     defaultVariants: { variant: 'default', size: 'default' },
   },
@@ -231,7 +231,7 @@ export interface ButtonProps
 - [ ] 条件类名与合并统一 `cn()`；多态样式统一 `cva`
 - [ ] 无 `#hex` / `rgb(` 硬编码颜色（抽查 `src/components`）
 - [ ] 无 `max-*` 响应式变体
-- [ ] 圆角只用 `rounded-lg` / `rounded-md` / `rounded-sm`
+- [ ] 圆角只用 `rounded-lg` / `rounded-md` / `rounded-sm`，大面板与 Hero 可用 `rounded-xl`，胶囊/圆形控件用 `rounded-full`，无魔法值
 - [ ] shadcn 组件均位于 `src/components/ui/`，无第三方 UI 库 import
 - [ ] 图片均使用 `next/image`；图标均来自 `lucide-react`
 - [ ] 无 `.module.css` / `.scss` / `.less` 文件；仅 `globals.css` 一个样式入口
@@ -246,9 +246,9 @@ export interface ButtonProps
 
 - [ ] 交互元素有 `focus-visible` 可见环
 - [ ] 正文对比度 ≥ 4.5:1（浅色/深色变量两套均检查）
-- [ ] 触摸目标 ≥ 44×44px
+- [ ] 触摸目标 ≥ 44×44px（`Button` 各档 `h-11` 起、`Input` `h-11`、关闭按钮 44×44）
 - [ ] 360px / 768px / 1440px 三档无横向滚动、布局按断点生效
-- [ ] `prefers-reduced-motion: reduce` 下无过渡动效
+- [ ] `prefers-reduced-motion: reduce` 下无过渡动效（`globals.css` 全局媒体查询）
 - [ ] 状态信息不单靠颜色（文字或图标伴随）
 
 ### 5.5 手动验证步骤

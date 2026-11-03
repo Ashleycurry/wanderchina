@@ -30,7 +30,7 @@
 
 - Server Component，无 `'use client'`、无状态、无请求
 - 卡片链接使用 `next/link`，`href` 为静态字符串
-- 图标为装饰性，`aria-hidden="true"`；可读名称由卡片标题承担
+- 图标为装饰性，`aria-hidden="true"`；可读名称由卡片标题承担（`aria-labelledby` 绑定标题 id，描述不进 accessible name）
 - 只用 Tailwind 工具类；不新增 npm 依赖
 
 ## 2. 核心场景

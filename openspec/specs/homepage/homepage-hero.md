@@ -58,13 +58,13 @@
 ### S3 桌面布局（≥768px）【正常】
 
 - **WHEN** 视口宽度 ≥768px
-- **THEN** 内容居中，最大宽度受限（`max-w-5xl` 级），两侧留白
+- **THEN** 内容居中，最大宽度由 `main` 外壳的 `max-w-screen-md`（768px）限定，两侧留白（`mx-auto`）
 - **AND** Hero 最小高度足够容纳完整文案与搜索框（不裁切）
 
 ### S4 搜索提交【正常】
 
 - **WHEN** 用户输入关键词并提交
-- **THEN** 展示「搜索即将上线」提示（`aria-live="polite"`）
+- **THEN** 展示 `Search is coming soon.` 提示（`aria-live="polite"`，可由 `search.hint` 覆写）
 - **AND** 页面不跳转、URL 不变、无任何网络请求
 
 ### S5 空输入提交【边界】
@@ -87,8 +87,9 @@
 
 ### S8 键盘可达与焦点【正常】
 
-- **WHEN** 用户仅用键盘 Tab 导航
+- **WHEN** 用户仅用键盘 Tab 导航且输入框非空
 - **THEN** 焦点顺序为：输入框 → 提交按钮
+- **AND** 输入为空时按钮 `disabled`、按 S5 不可聚焦，Tab 直接跳过该按钮
 - **AND** 焦点样式可见（`focus-visible` 环），无焦点陷阱
 
 ### S9 屏幕阅读器语义【正常】
@@ -168,7 +169,9 @@ export interface HeroProps {
 export interface SearchBoxProps {
   placeholder: string;
   submitLabel: string;
-  hint: string;
+  /** 可选；缺省用 DEFAULT_SEARCH_HINT（'Search is coming soon.'） */
+  hint?: string;
+  className?: string;
 }
 ```
 
@@ -180,7 +183,7 @@ export interface SearchBoxProps {
 | `subheadline` | 非空，≤120 字符 | 同上 |
 | `background.src` | 必须 `/images/` 开头；本期指向 `hero-placeholder.svg` | `'/images/hero-placeholder.svg'` |
 | `background.alt` | 固定 `''`（装饰性） | `''` |
-| `search.hint` | 非空则用于提交提示 | `'搜索即将上线'` |
+| `search.hint` | 可选；非空则用于提交提示 | `'Search is coming soon.'`（`DEFAULT_SEARCH_HINT`） |
 | `SearchBox` 内部状态 | `query`（string）、`showHint`（boolean）；不持有任何网络逻辑 | — |
 | 禁止项 | 组件内不出现 `fetch` / `axios` / `router.push`（本期） | — |
 
@@ -212,10 +215,10 @@ frontend/
 
 ### 4.2 交互
 
-- [ ] 输入关键词提交后显示「搜索即将上线」
+- [ ] 输入关键词提交后显示 `Search is coming soon.`
 - [ ] 提交后 URL 不变、页面不跳转、Network 无新增请求
 - [ ] 空输入时提交按钮为 `disabled`，点击无任何反馈
-- [ ] Tab 顺序为：输入框 → 按钮；焦点样式可见
+- [ ] Tab 顺序为：输入框 → 按钮（空输入时按钮被跳过）；焦点样式可见
 
 ### 4.3 图片与性能
 
@@ -228,7 +231,7 @@ frontend/
 ### 4.4 响应式与无障碍
 
 - [ ] 360px 视口：单列、无横向滚动、文字不溢出
-- [ ] ≥768px：内容居中、最大宽度受限、两侧留白
+- [ ] ≥768px：内容居中，最大宽度由 `main` 的 `max-w-screen-md` 限定，两侧留白
 - [ ] 文字与背景对比度 ≥ 4.5:1（图片加载成功与失败两种状态）
 - [ ] `prefers-reduced-motion: reduce` 下无过渡动效
 

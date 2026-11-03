@@ -15,7 +15,7 @@
 | 数据口径 | `status IN (open, resolved)`、`created_at ≥ now - 72h`、按 `comment_count ÷ hours_since_create` 降序、≤8 条 |
 | 已解决标识 | `resolved` 帖子返回 `resolved = true`，前端展示徽标 |
 | 举报屏蔽 | pending 举报评论摘要显示 `[removed pending review]`，接口不 500 |
-| mock 契约 | `src/mocks/hot-posts.ts`：`TrendingPost` × 12 条乱序 |
+| mock 契约 | `src/mocks/hot-posts.ts`：`PostSeed` × 12 条种子 + `getMockHotPosts(cityCode, now)`（`createdAt` 相对 `now` 计算） |
 | 纯函数排序 | `src/lib/rank-posts.ts`：`rankHotPosts(posts, now, limit)` |
 | 卡片渲染 | 标题、摘要、作者、评论数、resolved 徽标；mobile-first 列表 |
 
@@ -33,6 +33,8 @@
 - 列表为 Server Component；无客户端交互（本期不做点赞/跳转详情）
 - 排序与过滤全部在纯函数中完成，组件只负责渲染
 - `now` 显式传入纯函数，保证测试可复现
+- mock 的 `createdAt` 必须相对「请求时刻」求值（`getMockHotPosts(cityCode, now)`）；模块加载时固化成常量会让长驻进程在 72h 后列表恒为空
+- `loadHome` 内排序只做一次，组件不重复调用 `rankHotPosts`
 - 不引入测试框架，验收用 Node 内置 `node --test`
 - 不新增 npm 依赖
 
@@ -150,10 +152,8 @@ export function rankHotPosts(posts: TrendingPost[], now: Date, limit = 8): Trend
 ```ts
 /** src/components/homepage/hot-posts.tsx —— Server Component */
 export interface HotPostsProps {
-  /** 原始列表；排序截断在组件内调用 rankHotPosts 完成 */
+  /** 已过滤 + 排序 + 截断的热门列表；排序在 loadHome 内完成，组件只渲染 */
   posts: TrendingPost[];
-  /** 当前时间，服务端传入 */
-  now: Date;
   className?: string;
 }
 ```
@@ -173,9 +173,11 @@ export interface HotPostsProps {
 
 ```
 frontend/src/
-├── mocks/hot-posts.ts                 # 12 条乱序数据（含 hidden / 超 72h 用例）
+├── mocks/hot-posts.ts                 # 12 条种子（含 hidden / 超 72h 用例）+ getMockHotPosts
 ├── lib/rank-posts.ts                  # rankHotPosts 纯函数
-└── components/homepage/hot-posts.tsx  # Server Component 列表
+└── components/homepage/
+    ├── hot-posts.tsx                  # Server Component 列表
+    └── regions/hot-posts-region.tsx   # 挂载中间层：透传 posts
 
 frontend/tests/rank-posts.test.mjs     # node --test 断言
 ```
@@ -200,7 +202,7 @@ frontend/tests/rank-posts.test.mjs     # node --test 断言
 
 - [ ] `rankHotPosts` 对 12 条乱序输入返回 ≤8 条且热度单调不增
 - [ ] 过滤边界用例（72h、hidden、未来时间、0 评论）全部通过
-- [ ] `node --test frontend/tests/` 在无新增依赖下通过
+- [ ] `node --test frontend/tests/rank-posts.test.mjs` 在无新增依赖下通过（Node 24 不接受目录形式）
 
 ### 4.4 交互与隔离
 
@@ -210,7 +212,7 @@ frontend/tests/rank-posts.test.mjs     # node --test 断言
 
 ### 4.5 手动验证步骤
 
-1. `node --test frontend/tests/`，确认排序与过滤断言通过
+1. `node --test frontend/tests/rank-posts.test.mjs`，确认排序与过滤断言通过
 2. `npm run build && npm run start`，`curl` 断言 ≤8 条与徽标文案
 3. 浏览器检查 pending 举报摘要显示屏蔽文案
 4. 切换城市确认列表刷新；断网模拟 `partialError` 检查骨架 + 重试

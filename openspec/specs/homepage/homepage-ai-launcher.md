@@ -32,6 +32,8 @@
 - 面板使用 shadcn `Dialog`/`Sheet` 等价源码（`src/components/ui/`），不引入黑盒包
 - 全程无网络请求（本期）
 - 悬浮按钮 `position: fixed`，移动端考虑 `safe-area-inset-bottom`
+- 悬浮按钮与关闭按钮的触摸目标 ≥ 44×44px（`h-11 w-11` 或等效）
+- 不做颜色过渡：动效基线只允许 transform / opacity，`prefers-reduced-motion` 由 `globals.css` 全局媒体查询兜底
 
 ## 2. 核心场景
 
@@ -81,7 +83,7 @@
 
 - **WHEN** 视口 360px
 - **THEN** 按钮固定在右下角，避开 `safe-area-inset-bottom`
-- **AND** 不遮挡页面底部可点击元素（预留内边距）
+- **AND** 不遮挡页面底部可点击元素（`main` 底部预留 ≥ 96px 内边距）
 
 ### S9 区块降级不影响入口【隔离】
 
@@ -173,7 +175,8 @@ frontend/src/
 
 - [ ] 键盘 Tab 可达按钮，Enter/Space 可打开
 - [ ] 打开后焦点进入面板，关闭后焦点回到按钮
-- [ ] 360px 下按钮不遮挡底部可点击元素，避开 safe-area
+- [ ] 360px 下按钮不遮挡底部可点击元素，避开 safe-area（`main` 底部 ≥ 96px）
+- [ ] 悬浮按钮与关闭按钮触摸目标 ≥ 44×44px
 - [ ] `prefers-reduced-motion: reduce` 下无位移动效
 
 ### 4.5 手动验证步骤

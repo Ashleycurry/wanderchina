@@ -2,7 +2,7 @@
 
 ## Purpose
 
-首页骨架：为 Hero、功能导航、城市入口、热帖、热门景点、AI 入口 6 个区块提供固定顺序的挂载位与全局悬浮挂载点；同时定义首页聚合接口（`/api/home`）契约与区块级降级策略，支撑各区块独立开发、独立交付。
+首页骨架：为 Hero、功能导航、城市入口、编辑精选、热帖、热门景点、AI 入口 7 个区块提供固定顺序的挂载位与全局悬浮挂载点；同时定义首页聚合接口（`/api/home`）契约与区块级降级策略，支撑各区块独立开发、独立交付。
 
 技术栈约束：Next.js 14 App Router（Server Component 页面）+ TypeScript 5.9 + Tailwind CSS 3.4。本模块不含任何区块内部实现。
 
@@ -12,7 +12,7 @@
 
 | 项 | 说明 |
 | --- | --- |
-| 页面骨架 | `src/app/page.tsx`：6 个 `data-region` 挂载位（`hero` / `feature-nav` / `city-grid` / `hot-posts` / `hot-spots` / `ai-launcher`），顺序固定 |
+| 页面骨架 | `src/app/page.tsx`：7 个 `data-region` 挂载位（`hero` / `feature-nav` / `city-grid` / `picks` / `hot-posts` / `hot-spots` / `ai-launcher`），顺序固定 |
 | 布局与间距 | 区块间垂直节奏、页面最大宽度容器、mobile-first 响应式 |
 | SEO 元数据 | `src/app/layout.tsx`：`title`（含 WanderChina）、`description` |
 | 聚合接口契约 | `GET /api/home?cityCode=<CODE>` 响应结构：`picks` / `hotSpots` / `hotPosts` / `partialError` |
@@ -22,14 +22,14 @@
 
 | 项 | 归属 |
 | --- | --- |
-| 6 个区块的内部 UI 与交互 | 各区块 spec（`homepage-hero` 等） |
+| 7 个区块的内部 UI 与交互 | 各区块 spec（`homepage-hero` 等；`picks` 由本文定义契约） |
 | 后端接口与数据库实现 | 后续独立后端 spec（本文只定契约） |
 | 城市上下文维护（cookie / cityCode） | `homepage-city-grid` |
 | 真实搜索、AI 对话 | 后续独立 spec |
 
 ### 1.3 技术约束
 
-- 页面为 Server Component，骨架不 import 任何区块组件（区块自己替换占位）
+- 页面为 Server Component，骨架只 import `components/homepage/regions/` 中间层，不直接 import 区块实现
 - `data-region` 是稳定验收锚点，不随样式调整改名
 - 前端统一以相对路径 `/api/...` 调用，经 `next.config.mjs` rewrites 代理
 - 不引入状态管理库；区块间不共享客户端状态
@@ -40,13 +40,13 @@
 
 - **WHEN** 客户端请求 `GET /`
 - **THEN** 返回 HTTP 200
-- **AND** 页面包含完整 6 个区块容器
+- **AND** 页面包含完整 7 个区块容器
 
 ### S2 区块顺序固定【正常】
 
 - **WHEN** 查看 `/` 的 DOM
-- **THEN** 存在恰好 6 个 `[data-region]` 元素
-- **AND** 取值依次为 `hero`、`feature-nav`、`city-grid`、`hot-posts`、`hot-spots`、`ai-launcher`
+- **THEN** 存在恰好 7 个 `[data-region]` 元素
+- **AND** 取值依次为 `hero`、`feature-nav`、`city-grid`、`picks`、`hot-posts`、`hot-spots`、`ai-launcher`
 
 ### S3 SEO 元数据【正常】
 
@@ -98,8 +98,20 @@
 ### S11 骨架不依赖区块实现【正常】
 
 - **WHEN** 检查 `src/app/page.tsx`
-- **THEN** 6 个挂载位内部为占位块或区块组件挂载点
-- **AND** 骨架本身不 import 任何区块组件（避免反向依赖）
+- **THEN** 7 个挂载位内部为区块组件挂载点（经 `regions/` 中间层）
+- **AND** 骨架本身不直接 import 任何区块实现（避免反向依赖）
+
+### S12 编辑精选区块渲染【正常】
+
+- **WHEN** 访问 `/` 且该城市 `picks` 非空
+- **THEN** `[data-region="picks"]` 内渲染与 `picks` 条数一致的卡片，顺序与 `position` 升序一致
+- **AND** 每张卡片含封面（`next/image`，装饰性 `alt=""` + `aria-hidden`）、`title`、`Verified <lastVerifiedAt>` 与 `Guide` / `Post` 类型徽标
+
+### S13 编辑精选空列表与降级【异常】
+
+- **WHEN** `picks` 为空数组，或 `partialError.picks === true`
+- **THEN** 空列表显示兜底文案 `No editor picks for this city yet.`，不出现空白网格
+- **AND** 降级态显示骨架 + 重试入口，其余区块正常
 
 ## 3. 数据结构
 
@@ -134,12 +146,6 @@ export interface HomeResponse {
 ### 3.2 组件 Props
 
 ```ts
-/** 区块挂载位（page.tsx 内部使用） */
-export interface RegionSlotProps {
-  region: 'hero' | 'feature-nav' | 'city-grid' | 'hot-posts' | 'hot-spots' | 'ai-launcher';
-  children?: React.ReactNode;
-}
-
 /** 区块降级容器：骨架 + 重试 */
 export interface RegionBoundaryProps {
   loading?: boolean;
@@ -151,11 +157,13 @@ export interface RegionBoundaryProps {
 }
 ```
 
+`page.tsx` 不额外封装挂载位 Props：每个区块用 `<section data-region="...">` 直接包裹 `regions/*` 组件。
+
 ### 3.3 约束与默认值
 
 | 项 | 约束 |
 | --- | --- |
-| `data-region` | 取值只能是 6 个固定值，且全页唯一 |
+| `data-region` | 取值只能是 7 个固定值，且全页唯一 |
 | `picks` | 每项 6 个必填字段；`position` 升序且唯一；剔除后不补位 |
 | `partialError` | 只标记失败区块；失败区块数据一律空数组 `[]` |
 | 降级渲染 | 骨架高度需与真实内容近似（CLS 最小化），重试按钮可键盘触发 |
@@ -166,9 +174,11 @@ export interface RegionBoundaryProps {
 ```
 frontend/src/
 ├── app/
-│   ├── page.tsx                  # 6 个 data-region 挂载位
+│   ├── page.tsx                  # 7 个 data-region 挂载位
 │   └── layout.tsx                # title / description
 └── components/homepage/
+    ├── editor-picks.tsx          # 编辑精选卡片网格（本文件定义其契约）
+    ├── regions/                  # 区块挂载中间层（每个区块一个文件）
     └── region-boundary.tsx       # 骨架 + 重试（供数据区块复用）
 ```
 
@@ -177,10 +187,10 @@ frontend/src/
 ### 4.1 骨架与结构
 
 - [ ] `GET /` 返回 200
-- [ ] DOM 中恰好 6 个 `[data-region]`，顺序为 hero → feature-nav → city-grid → hot-posts → hot-spots → ai-launcher
+- [ ] DOM 中恰好 7 个 `[data-region]`，顺序为 hero → feature-nav → city-grid → picks → hot-posts → hot-spots → ai-launcher
 - [ ] `<title>` 含 `WanderChina`，存在 `description` meta
-- [ ] `page.tsx` 不 import 任何区块组件
-- [ ] 360px 无横向滚动；≥768px 内容居中且最大宽度受限
+- [ ] `page.tsx` 不直接 import 区块实现（只经 `regions/`）
+- [ ] 360px 无横向滚动；≥768px 内容居中，最大宽度由 `main` 的 `max-w-screen-md` 限定
 
 ### 4.2 聚合接口契约
 
@@ -193,12 +203,13 @@ frontend/src/
 ### 4.3 降级交互
 
 - [ ] `partialError` 区块显示骨架 + 重试入口，其余区块正常
-- [ ] 重试按钮可键盘触发（Enter/Space），触发后重新请求
+- [ ] `picks` 空列表显示兜底文案，条数与 `picks` 长度一致
+- [ ] 重试按钮可键盘触发（Enter/Space），触发后立即切骨架并重新请求
 - [ ] 骨架高度与真实内容近似，切换时无明显布局跳动
 
 ### 4.4 手动验证步骤
 
-1. `npm run build && npm run start`（NTFS 副本），`curl http://localhost:3000/` 断言 6 个 `data-region` 与 title
+1. `npm run build && npm run start`（NTFS 副本），`curl http://localhost:3000/` 断言 7 个 `data-region` 与 title
 2. 用 mock 关闭 `hotSpots` 数据源模拟失败，确认该区块骨架 + 重试、其余区块正常
 3. 三个区块同时失败，确认页面仍 200 且不出现整页错误页
 4. 360px / 768px / 1440px 三档截屏检查布局

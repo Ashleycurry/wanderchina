@@ -81,6 +81,24 @@ if not exist "%FRONTEND%\node_modules\next\package.json" (
 
 rem ---------- Production build ----------
 if /i "!MODE!"=="prod" (
+    rem next build needs readlink, which exFAT does not support: it dies with
+    rem "EISDIR: illegal operation on a directory, readlink ..." after a long build.
+    set "DRIVE=%~d0"
+    set "DRIVE=!DRIVE:~0,1!"
+    set "FSTYPE="
+    for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Volume -DriveLetter !DRIVE!).FileSystemType" 2^>nul') do set "FSTYPE=%%v"
+    if /i "!FSTYPE!"=="exFAT" (
+        echo [ERROR] Production build is not possible on drive %~d0 ^(!FSTYPE!^).
+        echo         next build needs readlink, which exFAT does not support.
+        echo         Build on an NTFS copy instead, for example D:\wanderchina-frontend:
+        echo             1. copy the source there
+        echo             2. run npm install
+        echo             3. run npm run build
+        echo Press any key to continue . . .
+        pause >nul
+        exit /b 1
+    )
+
     echo [BUILD] npm run build ...
     pushd "%FRONTEND%"
     call npm run build

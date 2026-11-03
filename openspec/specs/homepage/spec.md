@@ -2,7 +2,7 @@
 
 ## Purpose
 
-WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个区块，并由一份样式基线（`frontend-styling-stack`）约束实现方式。本文件是 OpenSpec 可校验的 capability 主规格，只保留验收级 Requirement 与 Scenario；每个模块的完整条款（模块边界 / 全量场景 / Props / ACCEPTANCE）见同目录下的模块手册：
+WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 7 个区块，并由一份样式基线（`frontend-styling-stack`）约束实现方式。本文件是 OpenSpec 可校验的 capability 主规格，只保留验收级 Requirement 与 Scenario；每个模块的完整条款（模块边界 / 全量场景 / Props / ACCEPTANCE）见同目录下的模块手册：
 
 | 模块 | 详细规格 |
 | --- | --- |
@@ -10,6 +10,7 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 | Hero | `homepage-hero.md` |
 | 功能导航 | `homepage-feature-nav.md` |
 | 城市入口 | `homepage-city-grid.md` |
+| 编辑精选 | `homepage-shell.md`（契约与展示） |
 | 热门帖子 | `homepage-hot-posts.md` |
 | 热门景点 | `homepage-hot-spots.md` |
 | AI 入口 | `homepage-ai-launcher.md` |
@@ -19,13 +20,13 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 
 ### Requirement: 首页骨架与挂载位
 
-系统 SHALL 在 `GET /` 渲染恰好 6 个固定顺序的区块挂载位，取值依次为 `hero`、`feature-nav`、`city-grid`、`hot-posts`、`hot-spots`、`ai-launcher`；页面为 Server Component，骨架不 import 任何区块实现，区块以 `src/components/homepage/regions/` 下的占位组件形式挂载。完整规格见 `openspec/specs/homepage/homepage-shell.md`。
+系统 SHALL 在 `GET /` 渲染恰好 7 个固定顺序的区块挂载位，取值依次为 `hero`、`feature-nav`、`city-grid`、`picks`、`hot-posts`、`hot-spots`、`ai-launcher`；页面为 Server Component，骨架只经 `src/components/homepage/regions/` 中间层挂载区块。完整规格见 `openspec/specs/homepage/homepage-shell.md`。
 
 #### Scenario: 首页可访问且区块齐全
 
 - **WHEN** 客户端请求 `GET /`
 - **THEN** 返回 HTTP 200
-- **AND** DOM 中存在恰好 6 个 `[data-region]` 元素，取值顺序为 `hero` → `feature-nav` → `city-grid` → `hot-posts` → `hot-spots` → `ai-launcher`
+- **AND** DOM 中存在恰好 7 个 `[data-region]` 元素，取值顺序为 `hero` → `feature-nav` → `city-grid` → `picks` → `hot-posts` → `hot-spots` → `ai-launcher`
 
 #### Scenario: SEO 元数据
 
@@ -92,7 +93,7 @@ WanderChina 首页能力域：由一个骨架（`homepage-shell`）承载 6 个�
 #### Scenario: 重试可键盘触发
 
 - **WHEN** 焦点位于重试按钮并按 Enter 或 Space
-- **THEN** 触发重新取数，骨架保持到数据返回
+- **THEN** 触发重新取数，按钮立即切换为骨架并保持到数据返回（`useTransition` 的 `isPending`）
 
 ### Requirement: 降级容器契约
 
@@ -189,7 +190,7 @@ Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、
 
 - **WHEN** 用户首次打开首页且无 `wc_city` cookie
 - **THEN** 返回默认城市 `SHA` 的内容
-- **AND** 响应写入 `wc_city` cookie（`Path=/`、`Max-Age` ≥ 30 天），后续请求按该 cookie 取数
+- **AND** 不主动写 cookie：`wc_city` 仅在用户主动切换城市时由 Client 组件写入，后续请求按该 cookie 取数
 
 #### Scenario: 切换城市联动
 
@@ -220,6 +221,27 @@ Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、
 - **WHEN** 用户仅用键盘 Tab 导航
 - **THEN** 8 个城市项依次可达，`focus-visible` 环可见
 - **AND** 当前城市项带 `aria-current="true"`
+
+### Requirement: 编辑精选区块展示
+
+系统 SHALL 在 `picks` 区块以 Server Component 渲染聚合接口返回的编辑精选：卡片顺序与 `position` 升序一致，空列表显示兜底文案，区块失败时按区块降级。完整规格见 `openspec/specs/homepage/homepage-shell.md`。
+
+#### Scenario: 卡片按 position 渲染
+
+- **WHEN** 访问 `/` 且当前城市 `picks` 非空
+- **THEN** 卡片数与 `picks` 长度一致，顺序与 `position` 升序一致
+- **AND** 每张卡片含封面（`next/image`，装饰性 `alt=""` + `aria-hidden`）、标题、`Verified <lastVerifiedAt>` 与 `Guide` / `Post` 类型徽标
+
+#### Scenario: 剔除后不补位
+
+- **WHEN** 某城市共 4 条 `editor_pick`，其中 1 条 `status = draft`
+- **THEN** 区块渲染剩余 3 张卡片，`position` 保持 1 / 2 / 4，不重新编号
+
+#### Scenario: 空列表与降级
+
+- **WHEN** `picks` 为 `[]`，或 `partialError.picks === true`
+- **THEN** 空列表显示 `No editor picks for this city yet.`
+- **AND** 降级态显示骨架 + 重试入口，其余区块正常
 
 ### Requirement: 热门帖子热度排序
 
@@ -321,6 +343,12 @@ Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、
 - **THEN** 区块显示兜底文案 `No attractions for this city yet.`
 - **AND** 不出现空白网格或常驻骨架
 
+#### Scenario: 卡片链接到城市页
+
+- **WHEN** 列表有数据且已传入当前城市 slug
+- **THEN** 每张卡片包裹 `<Link href="/city/<citySlug>">`（本期不建城市页，允许 404）
+- **AND** 链接可键盘聚焦，`focus-visible` 环可见
+
 #### Scenario: 响应式卡片网格
 
 - **WHEN** 视口宽度为 360px 或 ≥768px
@@ -369,7 +397,7 @@ Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、
 
 - **WHEN** 视口宽度为 360px
 - **THEN** 按钮固定在右下角并避开 `safe-area-inset-bottom`
-- **AND** 不遮挡页面底部可点击元素
+- **AND** 不遮挡页面底部可点击元素（`main` 底部预留 ≥ 96px 内边距）
 
 #### Scenario: 降级隔离
 
@@ -392,6 +420,12 @@ Hero SHALL 保持纯静态：不读取城市上下文、不请求数据接口、
 
 - **WHEN** 检查 `frontend/package.json` 的依赖声明
 - **THEN** 不含 `bootstrap`、`@mui/*`、`antd`、`@chakra-ui/*`、`styled-components`、`@emotion/*`、`sass`、`less`、`framer-motion`
+
+#### Scenario: 减少动效与触摸目标
+
+- **WHEN** 系统开启 `prefers-reduced-motion: reduce`，或用触屏点击交互元素
+- **THEN** `globals.css` 的全局媒体查询把 `transition-duration` / `animation-duration` 压到 `0.01ms`，页面无位移动效
+- **AND** 交互元素触摸目标 ≥ 44×44px（`Button` 默认 `h-11`、`icon` 档 44×44、`Input` `h-11`）
 
 ### Requirement: shadcn 组件源码基线
 
