@@ -100,7 +100,7 @@ npm install
 npm run dev
 ```
 
-验证：浏览器打开 http://localhost:3000 ，页面应显示 hello。
+验证：浏览器打开 http://localhost:3000 ，应看到首页 7 个区块——Hero、功能导航、城市入口、编辑精选、热门帖子、热门景点与 AI 悬浮入口。
 
 后端接口：
 
@@ -112,6 +112,8 @@ npm run dev
 ```powershell
 cd backend; mvn test        # 后端集成测试（需先启用数据库配置）
 cd frontend; npm run build  # 前端生产构建（next build）
+cd frontend; node --test tests/rank-posts.test.mjs tests/rank-spots.test.mjs  # 纯函数单测
+cd frontend; npx playwright test   # 首页 e2e（首次需先 npx playwright install）
 ```
 
 ### 4. 参考
